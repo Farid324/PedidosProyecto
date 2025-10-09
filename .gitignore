@@ -1,0 +1,17 @@
+# Node / Frontend
+node_modules/
+dist/
+build/
+.next/
+.out/
+coverage/
+.eslintcache
+.npm/
+.pnpm-store/
+*.log
+
+# Env / IDE
+.env*
+.vscode/
+.DS_Store
+Thumbs.db

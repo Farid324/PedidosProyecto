@@ -1,0 +1,4 @@
+# 🔧 Utilidades del backend
+logger.js               # Sistema de logs
+responseFormatter.js    # Formato estándar de respuestas
+dateHelper.js           # Helpers de fechas

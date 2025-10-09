@@ -1,0 +1,4 @@
+# 🪝 Custom hooks de React
+useAuth.js              # Hook para autenticación
+usePedido.js            # Hook para lógica de pedidos
+useReporte.js           # Hook para reportes

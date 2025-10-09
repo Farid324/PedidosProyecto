@@ -1,0 +1,7 @@
+# 🛣️ Rutas de la API
+authRoutes.js           # /api/auth/*
+pedidoRoutes.js         # /api/pedidos/*
+facturaRoutes.js        # /api/facturas/*
+menuRoutes.js           # /api/menu/*
+reporteRoutes.js        # /api/reportes/*
+index.js                # Centralización de rutas

@@ -1,0 +1,4 @@
+Estructura de la app
+Navbar.jsx          # Barra de navegación superior
+Sidebar.jsx         # Menú lateral (Admin/Cajero)
+Footer.jsx          # Pie de página

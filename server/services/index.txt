@@ -1,0 +1,5 @@
+# 📦 Servicios de backend
+printerService.js       # Lógica de impresión
+pdfService.js           # Generación de PDFs
+csvService.js           # Exportación a CSV
+reporteService.js       # Lógica compleja de reportes

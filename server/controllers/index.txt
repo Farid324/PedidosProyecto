@@ -1,0 +1,7 @@
+# 🎮 Controladores (lógica de negocio)
+authController.js       # Login, registro, validación
+pedidoController.js     # CRUD de pedidos
+facturaController.js    # CRUD de facturas
+menuController.js       # CRUD de menú
+reporteController.js    # Generación de reportes
+pagoController.js       # Registro de pagos

@@ -1,0 +1,4 @@
+facturacion/         # Componentes de facturación
+ClienteForm.jsx     # Formulario datos del cliente
+FacturaPreview.jsx  # Vista previa de factura
+MetodoPago.jsx      # Selector de método de pago

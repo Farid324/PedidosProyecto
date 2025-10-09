@@ -1,0 +1,4 @@
+# Componentes exclusivos admin
+MenuEditor.jsx      # Editor de precios del menú
+PlatilloForm.jsx    # Form para añadir/editar platillos
+ReporteMensual.jsx  # Vista reporte mensual

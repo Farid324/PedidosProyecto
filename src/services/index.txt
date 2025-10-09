@@ -1,0 +1,8 @@
+# 🔌 Servicios/API (comunicación con backend)
+api.js                  # Configuración base de Axios
+authService.js          # Login, logout, validación
+pedidoService.js        # CRUD de pedidos
+facturaService.js       # CRUD de facturas
+menuService.js          # CRUD de menú
+reporteService.js       # Generación de reportes
+printerService.js       # Llamadas a funciones de impresión

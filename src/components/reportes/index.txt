@@ -1,0 +1,4 @@
+# Componentes de reportes
+ReporteCard.jsx     # Tarjeta resumen de ventas
+GraficaVentas.jsx   # Gráfica de ventas (opcional)
+TablaVentas.jsx     # Tabla detallada de ventas

@@ -1,0 +1,7 @@
+Componentes generales
+Button.jsx          # Botón personalizado
+Input.jsx           # Input con validación
+Modal.jsx           # Modal reutilizable
+Card.jsx            # Tarjetas de información
+Table.jsx           # Tabla con paginación
+Spinner.jsx         # Loader/Spinner

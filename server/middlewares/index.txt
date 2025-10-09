@@ -1,0 +1,5 @@
+middlewares/             # 🛡️ Middlewares
+# Verificación de token/sesión
+# Verificación de roles (admin)
+# Manejo global de errores
+# Validación de datos de entrada
