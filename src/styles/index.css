@@ -8,7 +8,21 @@
   padding: 0;
   box-sizing: border-box;
 }
-
+:root {
+  --primary-color: #1d4ed8;
+  --secondary-color: #6b7280;
+  --success-color: #10b981;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #3b82f6;
+  --light-color: #f3f4f6;
+  --negro-color: #111827;
+  --negro-azul: #000000;
+  --fondo-color: #F8F2F3;
+  --guindo-color: #8B4A52;
+  --guindoClaro-color: #F8F2F3;
+  --blanco-color:#ffffff;
+}
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   -webkit-font-smoothing: antialiased;

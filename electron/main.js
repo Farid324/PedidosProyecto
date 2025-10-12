@@ -1,3 +1,4 @@
+//electron/main.js
 // Ventana principal, menú, ciclo de vida
 const mainWindow = new BrowserWindow({
   width: 1366,
