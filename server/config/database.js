@@ -5,9 +5,15 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const DIALECT = process.env.DB_DIALECT || 'sqlite';
 
+function resolveStorage(p) {
+  if (!p) return path.resolve(__dirname, '../../database/restaurant.db');
+  return path.isAbsolute(p) ? p : path.resolve(__dirname, p);
+}
+
 let sequelize;
 if (DIALECT === 'sqlite') {
-  const storage = process.env.DB_STORAGE || path.resolve(__dirname, '../../database/restaurant.db');
+  const storage = resolveStorage(process.env.DB_STORAGE);
+  console.log('🔗 SQLite file:', storage); // te confirma la ruta efectiva
   sequelize = new Sequelize({ dialect: 'sqlite', storage, logging: false });
 } else if (DIALECT === 'postgres') {
   const url =
