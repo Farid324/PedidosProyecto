@@ -18,6 +18,12 @@
 server/.env
 */.env.*    # por si hay otros paquetes
 
+# Permitir archivos de ejemplo
+!.env.example
+!server/.env.example
+!**/.env.example
+!**/.env.*.example   # (opcional) para .env.local.example, etc.
+
 # OS / IDE
 .vscode/
 .DS_Store

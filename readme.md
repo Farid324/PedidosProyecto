@@ -14,7 +14,7 @@ cd restaurant-pos
 ```
 PORT=3001
 DB_DIALECT=sqlite
-DB_STORAGE=../database/restaurant.db
+DB_STORAGE=../../database/restaurant.db
 JWT_SECRET=mi_clave_super_secreta
 ```
 
