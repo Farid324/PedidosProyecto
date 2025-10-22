@@ -47,13 +47,9 @@ restaurant-pos/
 #### 5.1. Crear/actualizar admin (opcional pero recomendado)
 - Desde la raíz del proyecto server:
 
-- Re-hash en sitio (1 comando)
+- Borrar y recrear (fuerza el hook beforeCreate)
 ```
-node -e "const {sequelize,Usuario}=require('./models');(async()=>{await sequelize.authenticate();const b=require('bcryptjs');const hash=await b.hash('admin123',10);await Usuario.update({password:hash,rol:'admin',email:'admin@restaurant.com'},{where:{email:'admin@restaurant.com'}});const u=await Usuario.findOne({where:{email:'admin@restaurant.com'}});console.log({email:u?.email,rol:u?.rol,passLen:u?.password?.length});process.exit(0)})()"
-```
-- Verifica que compara bien:
-```
-node -e "const {sequelize,Usuario}=require('./models');(async()=>{await sequelize.authenticate();const u=await Usuario.findOne({where:{email:'admin@restaurant.com'}});const b=require('bcryptjs');console.log({exists:!!u,rol:u?.rol,compare:u?await b.compare('admin123',u.password):null});process.exit(0)})()"
+node -e "const {sequelize,Usuario}=require('./models');(async()=>{await sequelize.authenticate();await Usuario.destroy({where:{email:'admin@restaurant.com'}});console.log('deleted');process.exit(0)})()"
 ```
 ```
 node server\scripts\create-admin.js
