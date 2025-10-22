@@ -1,0 +1,6 @@
+# Componentes de pedidos
+ProductCard.jsx     # Tarjeta de producto (bebida/plato)
+ProductList.jsx     # Lista de productos por categoría
+CartItem.jsx        # Item del carrito de pedido
+Cart.jsx            # Carrito completo
+ObservacionesModal.jsx # Modal para observaciones

@@ -1,0 +1,3 @@
+# ⚙️ Configuraciones
+database.js             # Configuración de Sequelize/SQLite
+config.js               # Variables de entorno y constantes

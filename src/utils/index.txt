@@ -1,0 +1,6 @@
+utils/                   # 🛠️ Utilidades y helpers
+formatters.js           # Formateo de fechas, moneda, etc.
+validators.js           # Validaciones de formularios
+constants.js            # Constantes (turnos, roles, etc.)
+exportCSV.js            # Exportación a CSV
+pdfGenerator.js         # Generación de PDF para facturas

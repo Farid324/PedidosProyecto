@@ -1,0 +1,8 @@
+# 📄 Páginas completas (vistas)
+LoginPage.jsx           # Login dual (Empleado/Admin)
+DashboardPage.jsx       # Dashboard principal (según rol)
+PedidosPage.jsx         # Página de registro de pedidos
+FacturacionPage.jsx     # Página de facturación
+ReportesPage.jsx        # Página de reportes (diarios)
+MenuPage.jsx            # Página gestión de menú (Admin)
+NotFoundPage.jsx        # Página 404

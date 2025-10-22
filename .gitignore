@@ -1,0 +1,32 @@
+# Node / Frontend / Backend
+**/node_modules/
+**/dist/
+**/build/
+**/.next/
+**/.out/
+**/coverage/
+**/.eslintcache
+**/*.log
+
+# Package managers (opcional)
+.npm/
+.pnpm-store/
+
+# Env
+.env
+.env.*
+server/.env
+*/.env.*    # por si hay otros paquetes
+
+# OS / IDE
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Electron / Releases
+release/
+**/*.asar
+
+# DB local (SQLite)
+database/*.db
+database/*.sqlite

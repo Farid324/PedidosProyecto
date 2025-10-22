@@ -1,0 +1,170 @@
+restaurant-pos/
+│
+├── 📂 electron/                    # ⚡ Proceso principal de Electron
+│   ├── main.js                     # Ventana principal, menú, ciclo de vida
+│   ├── preload.js                  # Bridge seguro entre Electron y React
+│   ├── printer.js                  # Lógica de impresión (comandas y facturas)
+│   └── database.js                 # Configuración y conexión a SQLite
+│
+├── 📂 src/                         # ⚛️ Frontend React
+│   │
+│   ├── 📂 assets/                  # 🎨 Recursos estáticos
+│   │   ├── 📂 icons/               # Iconos descargados (PNG/SVG)
+│   │   ├── 📂 images/              # Logos, fondos
+│   │   └── 📂 fonts/               # Tipografías personalizadas
+│   │
+│   ├── 📂 components/              # 🧩 Componentes reutilizables
+│   │   ├── 📂 common/              # Componentes generales
+│   │   │   ├── Button.jsx          # Botón personalizado
+│   │   │   ├── Input.jsx           # Input con validación
+│   │   │   ├── Modal.jsx           # Modal reutilizable
+│   │   │   ├── Card.jsx            # Tarjetas de información
+│   │   │   ├── Table.jsx           # Tabla con paginación
+│   │   │   └── Spinner.jsx         # Loader/Spinner
+│   │   │
+│   │   ├── 📂 layout/              # Estructura de la app
+│   │   │   ├── Navbar.jsx          # Barra de navegación superior
+│   │   │   ├── Sidebar.jsx         # Menú lateral (Admin/Cajero)
+│   │   │   └── Footer.jsx          # Pie de página
+│   │   │
+│   │   ├── 📂 pedidos/             # Componentes de pedidos
+│   │   │   ├── ProductCard.jsx     # Tarjeta de producto (bebida/plato)
+│   │   │   ├── ProductList.jsx     # Lista de productos por categoría
+│   │   │   ├── CartItem.jsx        # Item del carrito de pedido
+│   │   │   ├── Cart.jsx            # Carrito completo
+│   │   │   └── ObservacionesModal.jsx # Modal para observaciones
+│   │   │
+│   │   ├── 📂 facturacion/         # Componentes de facturación
+│   │   │   ├── ClienteForm.jsx     # Formulario datos del cliente
+│   │   │   ├── FacturaPreview.jsx  # Vista previa de factura
+│   │   │   └── MetodoPago.jsx      # Selector de método de pago
+│   │   │
+│   │   ├── 📂 reportes/            # Componentes de reportes
+│   │   │   ├── ReporteCard.jsx     # Tarjeta resumen de ventas
+│   │   │   ├── GraficaVentas.jsx   # Gráfica de ventas (opcional)
+│   │   │   └── TablaVentas.jsx     # Tabla detallada de ventas
+│   │   │
+│   │   └── 📂 admin/               # Componentes exclusivos admin
+│   │       ├── MenuEditor.jsx      # Editor de precios del menú
+│   │       ├── PlatilloForm.jsx    # Form para añadir/editar platillos
+│   │       └── ReporteMensual.jsx  # Vista reporte mensual
+│   │
+│   ├── 📂 pages/                   # 📄 Páginas completas (vistas)
+│   │   ├── LoginPage.jsx           # Login dual (Empleado/Admin)
+│   │   ├── DashboardPage.jsx       # Dashboard principal (según rol)
+│   │   ├── PedidosPage.jsx         # Página de registro de pedidos
+│   │   ├── FacturacionPage.jsx     # Página de facturación
+│   │   ├── ReportesPage.jsx        # Página de reportes (diarios)
+│   │   ├── MenuPage.jsx            # Página gestión de menú (Admin)
+│   │   └── NotFoundPage.jsx        # Página 404
+│   │
+│   ├── 📂 store/                   # 🗄️ Estado global (Zustand)
+│   │   ├── authStore.js            # Estado de autenticación (usuario, rol)
+│   │   ├── pedidoStore.js          # Estado del pedido actual
+│   │   ├── menuStore.js            # Estado del menú (productos)
+│   │   ├── facturaStore.js         # Estado de facturación
+│   │   └── reporteStore.js         # Estado de reportes
+│   │
+│   ├── 📂 services/                # 🔌 Servicios/API (comunicación con backend)
+│   │   ├── api.js                  # Configuración base de Axios
+│   │   ├── authService.js          # Login, logout, validación
+│   │   ├── pedidoService.js        # CRUD de pedidos
+│   │   ├── facturaService.js       # CRUD de facturas
+│   │   ├── menuService.js          # CRUD de menú
+│   │   ├── reporteService.js       # Generación de reportes
+│   │   └── printerService.js       # Llamadas a funciones de impresión
+│   │
+│   ├── 📂 utils/                   # 🛠️ Utilidades y helpers
+│   │   ├── formatters.js           # Formateo de fechas, moneda, etc.
+│   │   ├── validators.js           # Validaciones de formularios
+│   │   ├── constants.js            # Constantes (turnos, roles, etc.)
+│   │   ├── exportCSV.js            # Exportación a CSV
+│   │   └── pdfGenerator.js         # Generación de PDF para facturas
+│   │
+│   ├── 📂 hooks/                   # 🪝 Custom hooks de React
+│   │   ├── useAuth.js              # Hook para autenticación
+│   │   ├── usePedido.js            # Hook para lógica de pedidos
+│   │   └── useReporte.js           # Hook para reportes
+│   │
+│   ├── 📂 styles/                  # 🎨 Estilos globales
+│   │   ├── index.css               # Estilos globales + Tailwind
+│   │   └── variables.css           # Variables CSS personalizadas
+│   │
+│   ├── App.jsx                     # Componente raíz de React
+│   ├── main.jsx                    # Entry point de React
+│   └── router.jsx                  # Configuración de rutas (React Router)
+│
+├── 📂 server/                      # 🖥️ Backend Node.js + Express
+│   │
+│   ├── 📂 config/                  # ⚙️ Configuraciones
+│   │   ├── database.js             # Configuración de Sequelize/SQLite
+│   │   └── config.js               # Variables de entorno y constantes
+│   │
+│   ├── 📂 models/                  # 🗃️ Modelos de base de datos (Sequelize)
+│   │   ├── Usuario.js              # Modelo de usuarios (admin/empleados)
+│   │   ├── Pedido.js               # Modelo de pedidos
+│   │   ├── DetallePedido.js        # Detalle de items del pedido
+│   │   ├── Producto.js             # Modelo de productos (menú)
+│   │   ├── Categoria.js            # Categorías (bebidas, platos, etc)
+│   │   ├── Factura.js              # Modelo de facturas
+│   │   ├── Pago.js                 # Modelo de pagos
+│   │   ├── Turno.js                # Modelo de turnos (AM/PM)
+│   │   └── index.js                # Exportación de todos los modelos
+│   │
+│   ├── 📂 controllers/             # 🎮 Controladores (lógica de negocio)
+│   │   ├── authController.js       # Login, registro, validación
+│   │   ├── pedidoController.js     # CRUD de pedidos
+│   │   ├── facturaController.js    # CRUD de facturas
+│   │   ├── menuController.js       # CRUD de menú
+│   │   ├── reporteController.js    # Generación de reportes
+│   │   └── pagoController.js       # Registro de pagos
+│   │
+│   ├── 📂 routes/                  # 🛣️ Rutas de la API
+│   │   ├── authRoutes.js           # /api/auth/*
+│   │   ├── pedidoRoutes.js         # /api/pedidos/*
+│   │   ├── facturaRoutes.js        # /api/facturas/*
+│   │   ├── menuRoutes.js           # /api/menu/*
+│   │   ├── reporteRoutes.js        # /api/reportes/*
+│   │   └── index.js                # Centralización de rutas
+│   │
+│   ├── 📂 middlewares/             # 🛡️ Middlewares
+│   │   ├── authMiddleware.js       # Verificación de token/sesión
+│   │   ├── roleMiddleware.js       # Verificación de roles (admin)
+│   │   ├── errorHandler.js         # Manejo global de errores
+│   │   └── validator.js            # Validación de datos de entrada
+│   │
+│   ├── 📂 services/                # 📦 Servicios de backend
+│   │   ├── printerService.js       # Lógica de impresión
+│   │   ├── pdfService.js           # Generación de PDFs
+│   │   ├── csvService.js           # Exportación a CSV
+│   │   └── reporteService.js       # Lógica compleja de reportes
+│   │
+│   ├── 📂 utils/                   # 🔧 Utilidades del backend
+│   │   ├── logger.js               # Sistema de logs
+│   │   ├── responseFormatter.js    # Formato estándar de respuestas
+│   │   └── dateHelper.js           # Helpers de fechas
+│   │
+│   └── index.js                    # Entry point del servidor Express
+│
+├── 📂 database/                    # 💾 Base de datos SQLite
+│   ├── restaurant.db               # Archivo de base de datos (gitignored)
+│   ├── 📂 migrations/              # Migraciones de BD (Sequelize)
+│   │   └── 001-initial-schema.js
+│   └── 📂 seeders/                 # Datos iniciales (productos ejemplo)
+│       └── 001-seed-menu.js
+│
+├── 📂 public/                      # 📢 Archivos públicos de Electron
+│   ├── icon.png                    # Icono de la aplicación
+│   └── index.html                  # HTML base
+│
+├── 📂 dist/                        # 📦 Build de producción (gitignored)
+│
+├── 📂 release/                     # 💿 Instaladores generados (gitignored)
+│
+├── .env.example                    # Ejemplo de variables de entorno
+├── .gitignore                      # Archivos ignorados por Git
+├── package.json                    # Dependencias del proyecto
+├── vite.config.js                  # Configuración de Vite
+├── tailwind.config.js              # Configuración de Tailwind
+├── electron-builder.json           # Configuración del instalador
+└── README.md                       # Documentación del proyecto

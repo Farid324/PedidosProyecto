@@ -1,0 +1,13 @@
+{
+  "appId": "com.tuempresa.restaurantpos",
+  "productName": "Restaurant POS",
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "server/**/*",
+    "!server/node_modules/**",
+    "!**/*.map"
+  ],
+  "directories": { "output": "release" },
+  "win": { "target": ["nsis"] }
+}

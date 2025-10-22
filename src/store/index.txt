@@ -1,0 +1,6 @@
+# 🗄️ Estado global (Zustand)
+authStore.js            # Estado de autenticación (usuario, rol)
+pedidoStore.js          # Estado del pedido actual
+menuStore.js            # Estado del menú (productos)
+facturaStore.js         # Estado de facturación
+reporteStore.js         # Estado de reportes

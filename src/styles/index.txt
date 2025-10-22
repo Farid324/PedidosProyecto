@@ -1,0 +1,3 @@
+# 🎨 Estilos globales
+index.css               # Estilos globales + Tailwind
+variables.css           # Variables CSS personalizadas

@@ -1,0 +1,4 @@
+# 💾 Base de datos SQLite
+restaurant.db               # Archivo de base de datos (gitignored)
+📂 migrations/              # Migraciones de BD (Sequelize)
+📂 seeders/                 # Datos iniciales (productos ejemplo)

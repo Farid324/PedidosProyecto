@@ -1,0 +1,10 @@
+# 🗃️ Modelos de base de datos (Sequelize)
+Usuario.js              # Modelo de usuarios (admin/empleados)
+Pedido.js               # Modelo de pedidos
+DetallePedido.js        # Detalle de items del pedido
+Producto.js             # Modelo de productos (menú)
+Categoria.js            # Categorías (bebidas, platos, etc)
+Factura.js              # Modelo de facturas
+Pago.js                 # Modelo de pagos
+Turno.js                # Modelo de turnos (AM/PM)
+index.js                # Exportación de todos los modelos
