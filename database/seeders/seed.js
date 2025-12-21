@@ -1,4 +1,3 @@
-// database/seeders/seed.js
 const { sequelize } = require('../../server/config/database');
 const { 
   Usuario, 
@@ -11,14 +10,17 @@ const seedDatabase = async () => {
     console.log('🌱 Iniciando seed de la base de datos...');
 
     // Sincronizar base de datos (crear tablas)
+    // Usamos force: true para limpiar todo y evitar el error de IDs duplicados
     await sequelize.sync({ force: true });
-    console.log('✅ Tablas creadas');
+    console.log('✅ Tablas creadas/reiniciadas');
 
     // Crear usuario admin
+    // IMPORTANTE: Pasamos la contraseña como TEXTO PLANO.
+    // El modelo Usuario.js tiene un hook 'beforeCreate' que la encriptará automáticamente.
     const admin = await Usuario.create({
-      nombre: 'Administrador',
+      nombre: 'Carminita',
       email: 'admin@restaurant.com',
-      password: 'admin123',
+      password: 'admin123', 
       rol: 'admin'
     });
     console.log('✅ Usuario administrador creado');
@@ -74,6 +76,9 @@ const seedDatabase = async () => {
       { nombre: 'Ensalada Mixta', descripcion: 'Variedad de vegetales frescos', precio: 30.00, categoria_id: 6 },
       { nombre: 'Ensalada de Pollo', descripcion: 'Ensalada con pollo a la plancha', precio: 45.00, categoria_id: 6 }
     ]);
+    console.log('✅ Categorías creadas');
+
+    // Crear productos de ejemplo (Solo mostramos algunos para brevedad, pero están todos en el array original)
     console.log('✅ Productos creados');
 
     console.log('\n🎉 Seed completado exitosamente!');

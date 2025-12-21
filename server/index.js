@@ -1,4 +1,3 @@
-// server/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -18,7 +17,12 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middlewares
-app.use(cors());
+// Configuración específica de CORS para el login desde el frontend
+app.use(cors({
+  origin: 'http://localhost:5173', // Permite conexión desde Vite
+  credentials: true // Permite cookies/headers de autorización si fueran necesarios
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -48,9 +52,17 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Conexión a SQLite establecida correctamente');
     
+    // 🔥 FIX: Desactivar restricciones FK temporalmente
+    // Esto evita el error "SQLITE_CONSTRAINT: FOREIGN KEY constraint failed" al hacer cambios
+    await sequelize.query('PRAGMA foreign_keys = OFF');
+
     // Sincronizar modelos con la base de datos
-    // En producción, usar migraciones en lugar de sync
+    // Usamos alter: true para intentar conservar datos, pero ahora protegido por el PRAGMA
     await sequelize.sync({ alter: true });
+    
+    // 🔥 FIX: Reactivar restricciones FK
+    await sequelize.query('PRAGMA foreign_keys = ON');
+
     console.log('✅ Base de datos sincronizada');
     
     // Iniciar servidor

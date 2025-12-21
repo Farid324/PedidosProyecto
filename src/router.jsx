@@ -4,11 +4,12 @@ import useAuthStore from './store/authStore'
 
 // Páginas
 import LoginPage from './pages/LoginPage'
-import AdminDashboard from './pages/Admin/AdminDashboard'
+import AdminDashboard from './pages/Admin/Dashboard/AdminDashboard'
+import GestionMenuPage from './pages/Admin/Gestion/GestionMenuPage'
+import ReportesPage from './pages/Admin/Reportes/ReportesPage'
 import CajeroDashboard from './pages/CajeroDashboard'
 import PedidosPage from './pages/PedidosPage'
 import FacturacionPage from './pages/FacturacionPage'
-import ReportesPage from './pages/Admin/ReportesPage'
 import MenuPage from './pages/MenuPage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -58,8 +59,8 @@ const router = createBrowserRouter([
         element: <AdminDashboard />
       },
       {
-        path: 'pedidos',
-        element: <PedidosPage />
+        path: 'gestion-menu',
+        element: <GestionMenuPage />
       },
       {
         path: 'menu',

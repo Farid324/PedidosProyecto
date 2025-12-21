@@ -1,6 +1,6 @@
 // src/pages/ReportesPage.jsx
 import { TrendingUp, Calendar, Download } from 'lucide-react'
-import useAuthStore from '../../store/authStore'
+import useAuthStore from '../../../store/authStore'
 
 function ReportesPage() {
   const { role, user } = useAuthStore()

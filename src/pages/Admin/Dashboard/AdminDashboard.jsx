@@ -1,11 +1,11 @@
 // src/pages/AdminDashboard.jsx
 import { useState } from 'react'
 import { 
-  Home, ShoppingCart, FileText, TrendingUp, Settings, Users, 
-  DollarSign, Package, Calendar, BarChart3, PieChart,
+  ShoppingCart, FileText, Users, 
+  DollarSign, Calendar, BarChart3, PieChart,
   Clock, AlertCircle
 } from 'lucide-react'
-import useAuthStore from '../../store/authStore'
+import useAuthStore from '../../../store/authStore'
 
 function AdminDashboard() {
   const { user } = useAuthStore()

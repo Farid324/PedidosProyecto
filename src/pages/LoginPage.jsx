@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { User, Shield, ChefHat, Clock, Eye, EyeOff, LogIn, UserCheck } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import Modal from '../components/common/Modal'
+// 1. IMPORTANTE: Importar la imagen para que funcione al compilar
+import logoImg from '../assets/images/LogoAtavismo.png'
 
 function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { loginAdmin, loginCajero, loginError, clearError } = useAuthStore()
 
-  // Modal inline + rol activo
+  // Estado del modal y rol
   const [showLoginModal, setShowLoginModal] = useState(true)
   const [activeRole, setActiveRole] = useState('ADMIN')
 
@@ -25,20 +27,15 @@ function LoginPage() {
     const roleParam = (searchParams.get('role') || '').toLowerCase()
     if (roleParam === 'cajero') setActiveRole('CAJERO')
     if (roleParam === 'admin') setActiveRole('ADMIN')
-    setShowLoginModal(true)
+    
+    // Limpiar errores al montar
     clearError()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const closeLoginModal = () => {
-    setShowLoginModal(false)
-    clearError()
-    setShowPassword(false)
-  }
+  }, []) // Eliminé dependencias innecesarias para que solo corra al inicio
 
   const switchRole = (role) => {
     setActiveRole(role)
     clearError()
+    // Opcional: limpiar formularios al cambiar
     if (role === 'ADMIN') setAdminForm({ email: '', password: '' })
     if (role === 'CAJERO') setCajeroForm({ nombre: '', turno: 'AM' })
   }
@@ -46,33 +43,41 @@ function LoginPage() {
   const handleAdminLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    clearError()
+    
+    // Aquí se llama a la función del store
     const result = await loginAdmin(adminForm.email, adminForm.password)
-    if (result.success) navigate('/admin/dashboard')
+    
     setIsLoading(false)
+    if (result.success) {
+        navigate('/admin/dashboard')
+    }
   }
 
   const handleCajeroLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    clearError()
+    
     const result = await loginCajero(cajeroForm.nombre, cajeroForm.turno)
-    if (result.success) navigate('/cajero/pedidos')
+    
     setIsLoading(false)
+    if (result.success) {
+        navigate('/cajero/pedidos')
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
       <div className="max-w-lg w-full text-center">
-        {/* Modal inline dentro del contenedor */}
+        
         <Modal
           isOpen={showLoginModal}
-          onClose={closeLoginModal}
+          // Quitamos onClose para que el usuario no cierre el login por error
+          onClose={() => {}} 
           title={<>BIENVENIDO A <br /> ATAVISMO</>}
           subtitle={<>INGRESE SUS <br /> CREDENCIALES PARA INGRESAR</>}
-          imageSrc="src/assets/images/LogoAtavismo.png"
-          imageAlt="LogoSinLetra"
-          imageClass="!h-40 !w-40 shadow-xl"
+          imageSrc={logoImg} // 2. Usamos la variable importada
+          imageAlt="Logo Atavismo"
+          imageClass="!h-40 !w-40 shadow-xl object-contain mx-auto"
           maxWidth="max-w-lg"
           variant="inline"
           showClose={false}
@@ -87,7 +92,7 @@ function LoginPage() {
               className={`flex-1 p-2 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold ${
                 activeRole === 'ADMIN'
                   ? 'bg-[var(--guindo-primario)] text-[var(--blanco-primario)] shadow-sm font-bold text-base'
-                  : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-base'
+                  : 'border-transparent hover:bg-gray-200 text-base text-gray-600'
               }`}
             >
               Administrador
@@ -98,16 +103,16 @@ function LoginPage() {
               className={`flex-1 p-2 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold ${
                 activeRole === 'CAJERO'
                   ? 'bg-[var(--guindo-primario)] text-[var(--blanco-primario)] shadow-sm font-bold text-base'
-                  : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-base'
+                  : 'border-transparent hover:bg-gray-200 text-base text-gray-600'
               }`}
             >
               Cajero
             </button>
           </div>
 
-          {/* Contenido variable */}
+          {/* FORMULARIO ADMIN */}
           {activeRole === 'ADMIN' ? (
-            <form onSubmit={handleAdminLogin} className="space-y-4">
+            <form onSubmit={handleAdminLogin} className="space-y-4 text-left">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Correo Electrónico
@@ -116,10 +121,9 @@ function LoginPage() {
                   type="email"
                   value={adminForm.email}
                   onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
-                  className="input"
-                  placeholder="Ingresar correo electronico"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--guindo-primario)] outline-none"
+                  placeholder="admin@restaurant.com"
                   required
-                  autoFocus
                 />
               </div>
 
@@ -132,8 +136,8 @@ function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={adminForm.password}
                     onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
-                    className="input pr-10"
-                    placeholder="Ingresar contraseña"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--guindo-primario)] outline-none pr-10"
+                    placeholder="••••••••"
                     required
                   />
                   <button
@@ -147,7 +151,7 @@ function LoginPage() {
               </div>
 
               {loginError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center">
                   {loginError}
                 </div>
               )}
@@ -156,26 +160,16 @@ function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="btn btn-primary w-full flex items-center justify-center gap-2 bg-[var(--azul-primario)] border-0 text-sm"
+                  className="w-full py-3 bg-[var(--azul-primario)] hover:bg-blue-700 text-white rounded-lg font-bold transition-colors disabled:opacity-50 flex justify-center"
                 >
-                  {isLoading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <>
-                      Ingresar
-                    </>
-                  )}
+                  {isLoading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : 'Ingresar'}
                 </button>
-              </div>
-
-              <div className="text-center pt-2 border-t">
-                <p className="text-xs text-gray-500 mt-2">
-                  Credenciales de prueba: admin@restaurant.com / admin123
-                </p>
               </div>
             </form>
           ) : (
-            <form onSubmit={handleCajeroLogin} className="space-y-5">
+            
+            /* FORMULARIO CAJERO */
+            <form onSubmit={handleCajeroLogin} className="space-y-5 text-left">
               <div>
                 <label className="block text-sm font-medium text-[var(--guindo-primario)] mb-2">
                   Usuario
@@ -184,14 +178,10 @@ function LoginPage() {
                   type="text"
                   value={cajeroForm.nombre}
                   onChange={(e) => setCajeroForm({ ...cajeroForm, nombre: e.target.value })}
-                  className="input"
-                  placeholder="Ingresar nombre de usuario"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--guindo-primario)] outline-none"
+                  placeholder="Tu nombre"
                   required
-                  autoFocus
                 />
-                <p className="text-xs text-[var(--gris-primario)] mt-1">
-                  Este nombre aparecerá en los pedidos y reportes
-                </p>
               </div>
 
               <div>
@@ -204,13 +194,12 @@ function LoginPage() {
                     onClick={() => setCajeroForm({ ...cajeroForm, turno: 'AM' })}
                     className={`p-4 rounded-lg border transition-all ${
                       cajeroForm.turno === 'AM'
-                        ? 'border-[var(--azul-primario)] bg-blue-50 text-[var(--azul-primario)] shadow-md scale-105'
-                        : 'border-[var(--grisClaro-primario)] hover:border-[var(--gris-primario)] hover:bg-gray-50'
+                        ? 'border-[var(--azul-primario)] bg-blue-50 text-[var(--azul-primario)] shadow-md ring-2 ring-blue-200'
+                        : 'border-gray-200 hover:bg-gray-50 text-gray-600'
                     }`}
                   >
                     <div className="text-2xl mb-1">☀️</div>
-                    <div className="font-semibold text-sm">Turno Mañana</div>
-                    {/*<div className="text-sm opacity-75">7:00 AM - 3:00 PM</div>*/}
+                    <div className="font-semibold text-sm">Mañana</div>
                   </button>
 
                   <button
@@ -218,19 +207,18 @@ function LoginPage() {
                     onClick={() => setCajeroForm({ ...cajeroForm, turno: 'PM' })}
                     className={`p-4 rounded-lg border transition-all ${
                       cajeroForm.turno === 'PM'
-                        ? 'border-[var(--azul-primario)] bg-blue-50 text-[var(--azul-primario)] shadow-md scale-105'
-                        : 'border-[var(--grisClaro-primario)] hover:border-[var(--gris-primario)] hover:bg-gray-50'
+                        ? 'border-[var(--azul-primario)] bg-blue-50 text-[var(--azul-primario)] shadow-md ring-2 ring-blue-200'
+                        : 'border-gray-200 hover:bg-gray-50 text-gray-600'
                     }`}
                   >
                     <div className="text-2xl mb-1">🌙</div>
-                    <div className="font-semibold text-sm">Turno Tarde</div>
-                    {/*<div className="text-sm opacity-75">3:00 PM - 11:00 PM</div>*/}
+                    <div className="font-semibold text-sm">Tarde</div>
                   </button>
                 </div>
               </div>
 
               {loginError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center">
                   {loginError}
                 </div>
               )}
@@ -239,23 +227,16 @@ function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading || !cajeroForm.nombre.trim()}
-                  className="btn btn-primary w-full flex items-center justify-center gap-2 bg-[var(--azul-primario)]"
+                  className="w-full py-3 bg-[var(--azul-primario)] hover:bg-blue-700 text-white rounded-lg font-bold transition-colors disabled:opacity-50 flex justify-center"
                 >
-                  {isLoading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  ) : (
-                    <>
-                      Iniciar Turno
-                    </>
-                  )}
+                  {isLoading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : 'Iniciar Turno'}
                 </button>
               </div>
             </form>
           )}
         </Modal>
 
-        {/* Footer */}
-        <p className="text-[--negro-color] text-xs mt-6">© 2025 Restaurant POS - v1.0.0</p>
+        <p className="text-gray-500 text-xs mt-6">© 2025 Restaurant POS - v1.0.0</p>
       </div>
     </div>
   )

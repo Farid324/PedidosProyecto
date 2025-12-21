@@ -1,3 +1,4 @@
+// server/models/AccesoCajero.js
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define('AccesoCajero', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

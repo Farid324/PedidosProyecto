@@ -1,3 +1,4 @@
+// server/models/Factura.js
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define('Factura', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

@@ -77,10 +77,9 @@ function Sidebar({ menuItems, collapsed, onToggle, currentPath, onNavigate, user
       {/* Footer Info */}
       {!collapsed && (
         <div className="p-4 border-t border-[var(--grisShadow-primario)]">
-          <div className={`${userRole === 'admin' ? 'bg-purple-50' : 'bg-blue-50'} rounded-lg p-3`}>
-            <p className="text-xs font-semibold text-gray-600 mb-1">Versión</p>
-            <p className="text-sm font-bold text-gray-800">v1.0.0</p>
-          </div>
+          <button className={`${userRole === 'admin' ? 'bg-transparent' : 'bg-blue-50'} 
+          rounded-lg p-3 border-2 text-[var(--blanco-primario)] font-semibold w-full`}>Cerrar Sesión
+          </button>
         </div>
       )}
     </div>

@@ -30,6 +30,13 @@ function AdminLayout() {
       badge: null 
     },
     { 
+      id: 'gestion-menu', 
+      label: 'Gestión de Menú', 
+      icon: Package, 
+      path: '/admin/gestion-menu',
+      badge: null 
+    },
+    { 
       id: 'reportes', 
       label: 'Reportes', 
       icon: TrendingUp, 
@@ -89,12 +96,13 @@ function AdminLayout() {
           user={user}
           actions={navbarActions}
           userMenuItems={userMenuItems}
-          title="Panel de Administración"
+          title="PANEL ADMINISTRADOR"
+          subtitle={`Usuario: ${user?.name || 'Administrador'}`}
         />
 
         {/* Page Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[var(--blancoFondo-primario)]">
-          <div className="container mx-auto px-6 py-8 bg-[var(--blancoFondo-primario)]">
+          <div className="container mx-auto px-4 py-8 bg-[var(--blancoFondo-primario)]">
             <Outlet />
           </div>
         </main>

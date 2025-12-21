@@ -1,19 +1,22 @@
-// server/routes/menuRoutes.js  
-const express = require('express');
-const router = express.Router();
-const menuController = require('../controllers/menuController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const router = require('express').Router();
+const menu = require('../controllers/menuController');
+const auth = require('../middlewares/authMiddleware');
+const role = require('../middlewares/roleMiddleware');
 
-// Todas las rutas requieren autenticación
-router.use(authMiddleware);
+// Todas requieren estar logueado
+router.use(auth);
 
-router.get('/categorias', menuController.getCategorias);
-router.post('/categorias', menuController.createCategoria);
+// Categorías (solo admin para crear/editar/borrar)
+router.get('/categorias', menu.getCategorias);
+router.post('/categorias', role(['admin']), menu.createCategoria);
+router.put('/categorias/:id', role(['admin']), menu.updateCategoria);
+router.delete('/categorias/:id', role(['admin']), menu.deleteCategoria);
 
-router.get('/productos', menuController.getProductos);
-router.get('/productos/:id', menuController.getProductoById);
-router.post('/productos', menuController.createProducto);
-router.put('/productos/:id', menuController.updateProducto);
-router.delete('/productos/:id', menuController.deleteProducto);
+// Productos
+router.get('/productos', menu.getProductos);
+router.post('/productos', role(['admin']), menu.createProducto);
+router.put('/productos/:id', role(['admin']), menu.updateProducto);
+router.delete('/productos/:id', role(['admin']), menu.deleteProducto);
+router.put('/productos/:id/disponible', role(['admin']), menu.setDisponibilidad);
 
 module.exports = router;

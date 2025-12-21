@@ -3,12 +3,11 @@ import { ChevronDown } from 'lucide-react';
 
 export default function Navbar({ user, actions = [], userMenuItems = [], title, subtitle }) {
   return (
-    <header className="h-20 bg-[var(--blancoFondo-primario)] border-b border-gray-200 px-4 flex items-center justify-between">
+    <header className="h-20 bg-[var(--blanco-primario)] border-b border-gray-200 px-4 flex items-center justify-between">
       <div>
-        <h1 className="text-lg font-semibold text-gray-800">{title}</h1>
-        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+        <h1 className="text-xl font-bold text-[var(--guindo-primario)]">{title}</h1>
+        {subtitle && <p className="text-base font-semibold text-[var(--gris-primario)]">{subtitle}</p>}
       </div>
-
       <div className="flex items-center gap-2">
         {/* Acciones (icon buttons) */}
         {actions.map((a, i) => {

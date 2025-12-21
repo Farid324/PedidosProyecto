@@ -21,4 +21,8 @@ if (db.Pedido && db.DetallePedido) db.Pedido.hasMany(db.DetallePedido, { foreign
 
 if (db.Factura && db.Pedido) db.Factura.belongsTo(db.Pedido, { foreignKey: 'pedido_id' });
 
+if (db.Producto && db.Categoria) {
+  db.Producto.belongsTo(db.Categoria, { foreignKey: 'categoria_id', as: 'categoria' });
+  db.Categoria.hasMany(db.Producto, { foreignKey: 'categoria_id', as: 'productos' });
+}
 module.exports = { sequelize, ...db };
