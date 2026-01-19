@@ -88,6 +88,7 @@ function AdminLayout() {
         currentPath={location.pathname}
         onNavigate={(path) => navigate(path)}
         userRole="admin"
+        onLogout={handleLogout}
       />
 
       {/* Main Content */}

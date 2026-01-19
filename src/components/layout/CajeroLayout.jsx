@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { 
-  ShoppingCart, FileText, Clock, LogOut, DollarSign,
+  ShoppingCart, FileText, Clock, LogOut, DollarSign, Home,
   Receipt, User, Sun, Moon
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
@@ -23,8 +23,15 @@ function CajeroLayout() {
   // Menú limitado para cajeros
   const menuItems = [
     { 
+      id: 'dashboard', 
+      label: 'Dashboard', 
+      icon: Home, 
+      path: '/cajero/dashboard',
+      badge: null 
+    },
+    { 
       id: 'pedidos', 
-      label: 'Nuevo Pedido', 
+      label: 'Registrar Pedido', 
       icon: ShoppingCart, 
       path: '/cajero/pedidos',
       badge: null 
@@ -91,6 +98,7 @@ function CajeroLayout() {
         currentPath={location.pathname}
         onNavigate={(path) => navigate(path)}
         userRole="cajero"
+        onLogout={handleLogout}
       />
 
       {/* Main Content */}

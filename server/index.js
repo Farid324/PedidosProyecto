@@ -20,11 +20,13 @@ const PORT = process.env.PORT || 3001;
 // Configuración específica de CORS para el login desde el frontend
 app.use(cors({
   origin: 'http://localhost:5173', // Permite conexión desde Vite
-  credentials: true // Permite cookies/headers de autorización si fueran necesarios
+  credentials: true 
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 🔥 SOLUCIÓN DEL ERROR "PayloadTooLargeError"
+// Aumentamos el límite de 100kb (default) a 50mb para soportar imágenes en Base64
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Rutas API
 app.use('/api/auth', authRoutes);
@@ -52,15 +54,13 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Conexión a SQLite establecida correctamente');
     
-    // 🔥 FIX: Desactivar restricciones FK temporalmente
-    // Esto evita el error "SQLITE_CONSTRAINT: FOREIGN KEY constraint failed" al hacer cambios
+    // Desactivar restricciones FK temporalmente para permitir actualizaciones de esquema
     await sequelize.query('PRAGMA foreign_keys = OFF');
-
-    // Sincronizar modelos con la base de datos
-    // Usamos alter: true para intentar conservar datos, pero ahora protegido por el PRAGMA
+    
+    // Sincronizar modelos
     await sequelize.sync({ alter: true });
     
-    // 🔥 FIX: Reactivar restricciones FK
+    // Reactivar restricciones FK
     await sequelize.query('PRAGMA foreign_keys = ON');
 
     console.log('✅ Base de datos sincronizada');

@@ -1,6 +1,7 @@
 // src/components/layout/Sidebar.jsx
 import { LuPanelRight } from "react-icons/lu";
-function Sidebar({ menuItems, collapsed, onToggle, currentPath, onNavigate, userRole }) {
+import { LogOut } from 'lucide-react'
+function Sidebar({ menuItems, collapsed, onToggle, currentPath, onNavigate, userRole, onLogout }) {
   const isActive = (path) => currentPath === path
 
   return (
@@ -76,9 +77,15 @@ function Sidebar({ menuItems, collapsed, onToggle, currentPath, onNavigate, user
 
       {/* Footer Info */}
       {!collapsed && (
-        <div className="p-4 border-t border-[var(--grisShadow-primario)]">
-          <button className={`${userRole === 'admin' ? 'bg-transparent' : 'bg-blue-50'} 
-          rounded-lg p-3 border-2 text-[var(--blanco-primario)] font-semibold w-full`}>Cerrar Sesión
+        <div className="p-3 border-t border-[var(--grisShadow-primario)]">
+          <button 
+            onClick={onLogout}
+            // ✅ Aplicamos flex, items-center y gap-2 para alinear ícono y texto
+            className={`${userRole === 'admin' ? 'bg-transparent hover:bg-[var(--blancoShadow-primario)]' : 'bg-transparent hover:bg-[var(--blancoShadow-primario)]'} 
+          rounded-lg p-3 border-2 text-[var(--blanco-primario)] font-semibold w-full hover:bg-opacity-80 transition-colors flex items-center justify-start gap-3 px-3 py-2.5`}
+          >
+            <LogOut size={20} /> {/* Ícono a la izquierda */}
+            <span>Cerrar Sesión</span>
           </button>
         </div>
       )}

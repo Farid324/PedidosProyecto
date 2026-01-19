@@ -1,6 +1,6 @@
-// src/pages/ReportesPage.jsx
+// src/pages/employee/Reportes/ReportesPage.jsx
 import { TrendingUp, Calendar, Download } from 'lucide-react'
-import useAuthStore from '../store/authStore'
+import useAuthStore from '../../../store/authStore'
 
 function ReportesPage() {
   const { role, user } = useAuthStore()
@@ -9,10 +9,10 @@ function ReportesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-[var(--gris-primario)]">
             {role === 'cajero' ? 'Mi Reporte' : 'Reportes'}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-[var(--gris-primario)] mt-1">
             {role === 'cajero' 
               ? `Reporte de ${user?.name} - Turno actual`
               : 'Reportes y análisis del restaurant'}

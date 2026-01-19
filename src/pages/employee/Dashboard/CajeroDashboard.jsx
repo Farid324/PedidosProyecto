@@ -4,7 +4,7 @@ import {
   ShoppingCart, DollarSign, Clock, Users, 
   TrendingUp, FileText, Coffee, UtensilsCrossed
 } from 'lucide-react'
-import useAuthStore from '../store/authStore'
+import useAuthStore from '../../../store/authStore'
 
 function CajeroDashboard() {
   const { user, turno } = useAuthStore()
@@ -57,8 +57,20 @@ function CajeroDashboard() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-[var(--gris-primario)]">Dashboard Pedidos</h1>
+          <p className="text-[var(--gris-primario)] mt-1">Gestion de administracion de pedidos</p>
+        </div>
+        <div className="flex gap-3">
+          <button className="bg-[var(--azul-primario)] text-white font-bold p-2 hover:bg-[var(--primary-color)] rounded-md flex items-center gap-2">
+            <FileText size={20} />
+            Generar Reporte
+          </button>
+        </div>
+      </div>
       {/* Header con información del cajero */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+      <div className="card bg-[var(--azul-primario)] rounded-lg p-6 text-white">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">Bienvenido, {user?.name}</h1>
@@ -72,7 +84,7 @@ function CajeroDashboard() {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-blue-100">Hora actual</p>
+            <p className="text-sm text-white">Hora actual</p>
             <p className="text-3xl font-bold">
               {new Date().toLocaleTimeString('es-BO', { 
                 hour: '2-digit', 
@@ -91,7 +103,7 @@ function CajeroDashboard() {
               <div className={`bg-${stat.color}-100 p-3 rounded-lg`}>
                 <stat.icon className={`text-${stat.color}-600`} size={24} />
               </div>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-[var(--gris-primario)]">
                 {stat.change}
               </span>
             </div>

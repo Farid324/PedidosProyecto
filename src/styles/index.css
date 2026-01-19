@@ -28,9 +28,16 @@
   --gris-primario:#3E403F;
   --azul-primario: #0090FF;
   --blancoFondo-primario:#F9FBFB;
+  --blancoFondo-secundario:#ececec;
   --grisClaro-primario:#D8D8D8;
   --grisShadow-primario:#d8d8d88a;
   --blancoShadow-primario:#ffffff1a;
+
+  --color-boton-uno:#0090FF;
+  --color-boton-dos:#FFD713;
+  --color-boton-tres:#B6B2B2;
+  --color-boton-cuatro:#FF5555;
+  --color-boton-cinco:#F7620B;
 }
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

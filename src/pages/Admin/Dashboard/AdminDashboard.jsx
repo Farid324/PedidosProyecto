@@ -63,8 +63,8 @@ function AdminDashboard() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard Administrativo</h1>
-          <p className="text-gray-600 mt-1">Bienvenido, {user?.name}</p>
+          <h1 className="text-3xl font-bold text-[var(--gris-primario)]">Dashboard Administrativo</h1>
+          <p className="text-[var(--gris-primario)] mt-1">Bienvenido, {user?.name}</p>
         </div>
         <div className="flex gap-3">
           <button className="btn btn-secondary flex items-center gap-2">

@@ -1,5 +1,5 @@
 // src/pages/MenuPage.jsx
-import { ChefHat, Plus, Edit } from 'lucide-react'
+import { ChefHat, Plus } from 'lucide-react'
 
 function MenuPage() {
   return (

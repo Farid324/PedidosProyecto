@@ -1,4 +1,4 @@
-// src/pages/FacturacionPage.jsx
+// src/pages/employee/Facturacion/FacturacionPage.jsx
 import { FileText, Download } from 'lucide-react'
 
 function FacturacionPage() {

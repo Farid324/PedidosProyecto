@@ -6,10 +6,11 @@ import useAuthStore from './store/authStore'
 import LoginPage from './pages/LoginPage'
 import AdminDashboard from './pages/Admin/Dashboard/AdminDashboard'
 import GestionMenuPage from './pages/Admin/Gestion/GestionMenuPage'
-import ReportesPage from './pages/Admin/Reportes/ReportesPage'
-import CajeroDashboard from './pages/CajeroDashboard'
-import PedidosPage from './pages/PedidosPage'
-import FacturacionPage from './pages/FacturacionPage'
+import ReportesPageAdmin from './pages/Admin/Reportes/ReportesPage'
+import CajeroDashboard from './pages/employee/Dashboard/CajeroDashboard'
+import PedidosPage from './pages/employee/Pedidos/PedidosPage'
+import FacturacionPage from './pages/employee/Facturacion/FacturacionPage'
+import ReportesPageEmployee from './pages/employee/Reportes/ReportesPage'
 import MenuPage from './pages/MenuPage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -72,7 +73,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'reportes',
-        element: <ReportesPage />
+        element: <ReportesPageAdmin />
       }
     ]
   },
@@ -89,6 +90,10 @@ const router = createBrowserRouter([
         element: <Navigate to="/cajero/pedidos" replace />
       },
       {
+        path: 'dashboard',
+        element: <CajeroDashboard />
+      },
+      {
         path: 'pedidos',
         element: <PedidosPage />
       },
@@ -98,7 +103,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'reportes',
-        element: <ReportesPage />
+        element: <ReportesPageEmployee />
       }
     ]
   },

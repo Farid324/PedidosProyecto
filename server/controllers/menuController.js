@@ -1,4 +1,3 @@
-// server/controllers/menuController.js
 const { Categoria, Producto } = require('../models');
 const { Op } = require('sequelize');
 
@@ -95,6 +94,7 @@ exports.getProductos = async (req, res) => {
         categoria_id: p.categoria_id,
         categoria: p.categoria ? { id: p.categoria.id, nombre: p.categoria.nombre } : null,
         imagen_url: p.imagen_url || null,
+        imagen_base64: p.imagen_base64 || null, // ✅ AGREGADO: Para enviar la imagen al frontend
       })),
     });
   } catch (e) {
@@ -105,9 +105,12 @@ exports.getProductos = async (req, res) => {
 
 exports.createProducto = async (req, res) => {
   try {
-    const { nombre, descripcion, precio, categoria_id, disponible = true, imagen_url } = req.body || {};
+    // ✅ AGREGADO: extraer imagen_base64
+    const { nombre, descripcion, precio, categoria_id, disponible = true, imagen_url, imagen_base64 } = req.body || {};
+    
     if (!nombre?.trim()) return res.status(400).json({ success: false, error: 'Nombre es requerido' });
     if (!categoria_id) return res.status(400).json({ success: false, error: 'Categoría es requerida' });
+    
     const cat = await Categoria.findByPk(categoria_id);
     if (!cat) return res.status(404).json({ success: false, error: 'Categoría no existe' });
 
@@ -118,6 +121,7 @@ exports.createProducto = async (req, res) => {
       categoria_id,
       disponible: !!disponible,
       imagen_url: imagen_url || null,
+      imagen_base64: imagen_base64 || null, // ✅ AGREGADO: Guardar la imagen
     });
 
     res.status(201).json({ success: true, data: row });
@@ -130,7 +134,9 @@ exports.createProducto = async (req, res) => {
 exports.updateProducto = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, descripcion, precio, categoria_id, disponible, imagen_url } = req.body || {};
+    // ✅ AGREGADO: extraer imagen_base64
+    const { nombre, descripcion, precio, categoria_id, disponible, imagen_url, imagen_base64 } = req.body || {};
+    
     const row = await Producto.findByPk(id);
     if (!row) return res.status(404).json({ success: false, error: 'Producto no encontrado' });
 
@@ -144,6 +150,9 @@ exports.updateProducto = async (req, res) => {
     if (precio !== undefined) row.precio = Number(precio);
     if (disponible !== undefined) row.disponible = !!disponible;
     if (imagen_url !== undefined) row.imagen_url = imagen_url;
+    
+    // ✅ AGREGADO: Actualizar imagen si viene en la petición
+    if (imagen_base64 !== undefined) row.imagen_base64 = imagen_base64;
 
     await row.save();
     res.json({ success: true, data: row });
