@@ -76,19 +76,25 @@ function Sidebar({ menuItems, collapsed, onToggle, currentPath, onNavigate, user
       </nav>
 
       {/* Footer Info */}
-      {!collapsed && (
-        <div className="p-3 border-t border-[var(--grisShadow-primario)]">
-          <button 
-            onClick={onLogout}
-            // ✅ Aplicamos flex, items-center y gap-2 para alinear ícono y texto
-            className={`${userRole === 'admin' ? 'bg-transparent hover:bg-[var(--blancoShadow-primario)]' : 'bg-transparent hover:bg-[var(--blancoShadow-primario)]'} 
-          rounded-lg p-3 border-2 text-[var(--blanco-primario)] font-semibold w-full hover:bg-opacity-80 transition-colors flex items-center justify-start gap-3 px-3 py-2.5`}
-          >
-            <LogOut size={20} /> {/* Ícono a la izquierda */}
-            <span>Cerrar Sesión</span>
-          </button>
-        </div>
-      )}
+      <div className="p-3 border-t border-[var(--grisShadow-primario)]">
+        <button 
+          onClick={onLogout}
+          title={collapsed ? "Cerrar Sesión" : ""} // Tooltip útil cuando está colapsado
+          className={`
+            flex items-center rounded-lg border-2 text-[var(--blanco-primario)] font-semibold transition-colors
+            bg-transparent hover:bg-[var(--blancoShadow-primario)] hover:bg-opacity-80
+            ${collapsed 
+              ? 'justify-center w-full py-2'    // Estilos cuando está CERRADO (centrado)
+              : 'justify-start w-full gap-3 px-3 py-2.5' // Estilos cuando está ABIERTO (con gap)
+            }
+          `}
+        >
+          <LogOut size={20} />
+          
+          {/* Aquí está la magia: El texto solo se muestra si NO está colapsado */}
+          {!collapsed && <span>Cerrar Sesión</span>}
+        </button>
+      </div>
     </div>
   )
 }
