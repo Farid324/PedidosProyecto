@@ -1,3 +1,4 @@
+// src/components/menu/CategoryModal.jsx
 import { useEffect, useState } from 'react';
 import { Edit3, Trash2, Tag } from 'lucide-react';
 import Modal from '../../components/common/Modal';

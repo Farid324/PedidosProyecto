@@ -1,3 +1,5 @@
+// database/seeders/seed.js
+
 const { sequelize } = require('../../server/config/database');
 const { 
   Usuario, 

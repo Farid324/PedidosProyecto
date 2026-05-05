@@ -1,3 +1,5 @@
+// server/routes/menuRoutes.js
+
 const router = require('express').Router();
 const menu = require('../controllers/menuController');
 const auth = require('../middlewares/authMiddleware');

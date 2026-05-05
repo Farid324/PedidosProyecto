@@ -1,3 +1,5 @@
+// server/controllers/menuController.js
+
 const { Categoria, Producto } = require('../models');
 const { Op } = require('sequelize');
 

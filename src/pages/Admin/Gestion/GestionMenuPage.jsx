@@ -1,3 +1,5 @@
+// src/pages/Admin/Gestion/GestionMenuPage.jsx
+
 import { useEffect, useMemo, useState } from 'react';
 import { PlusCircle, Tag, Search, Edit3, Trash2 } from 'lucide-react';
 import useAuthStore from '../../../store/authStore';

@@ -1,4 +1,4 @@
-// src/pages/ReportesPage.jsx
+// src/pages/Admin/Reportes/ReportesPage.jsx
 import { TrendingUp, Calendar, Download } from 'lucide-react'
 import useAuthStore from '../../../store/authStore'
 

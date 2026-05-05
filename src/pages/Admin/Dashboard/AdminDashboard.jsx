@@ -1,4 +1,4 @@
-// src/pages/AdminDashboard.jsx
+// src/pages/Admin/Dashboard/AdminDashboard.jsx
 import { useState } from 'react'
 import { 
   ShoppingCart, FileText, Users, 

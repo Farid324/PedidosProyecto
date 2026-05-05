@@ -1,4 +1,4 @@
-// src/services/authService.js
+// server/services/authService.js
 import api from './api';
 
 const authService = {

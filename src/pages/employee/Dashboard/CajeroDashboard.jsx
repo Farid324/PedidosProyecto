@@ -1,4 +1,4 @@
-// src/pages/CajeroDashboard.jsx
+// src/pages/employee/Dashboard/CajeroDashboard.jsx
 import { useState } from 'react'
 import { 
   ShoppingCart, DollarSign, Clock, Users, 
