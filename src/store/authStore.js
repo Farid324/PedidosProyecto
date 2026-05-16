@@ -36,9 +36,10 @@ const useAuthStore = create(
         }
       },
 
-      loginCajero: async (nombreCajero, turno) => {
+      // Recibe nombre + password + turno
+      loginCajero: async (nombre, password, turno) => {
         try {
-          const response = await authService.loginCajero(nombreCajero, turno);
+          const response = await authService.loginCajero(nombre, password, turno);
           
           if (response.success) {
             set({

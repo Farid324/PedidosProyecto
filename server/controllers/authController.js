@@ -61,29 +61,50 @@ const loginAdmin = async (req, res) => {
 // Login de Cajero (sin contraseña)
 const loginCajero = async (req, res) => {
   try {
-    const { nombre, turno } = req.body;
+    const { nombre, password, turno } = req.body;
     const dispositivo = req.headers['user-agent'];
-
-    if (!nombre || !turno) {
+ 
+    if (!nombre || !password || !turno) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Nombre y turno son requeridos' 
+        error: 'Usuario, contraseña y turno son requeridos' 
       });
     }
-
+ 
+    // Buscar el usuario cajero por nombre
+    const cajero = await Usuario.findOne({ 
+      where: { nombre: nombre.trim(), rol: 'cajero', activo: true } 
+    });
+ 
+    if (!cajero) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Usuario o contraseña incorrectos' 
+      });
+    }
+ 
+    // Verificar contraseña
+    const validPassword = await cajero.comparePassword(password);
+    if (!validPassword) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Usuario o contraseña incorrectos' 
+      });
+    }
+ 
     // Registrar acceso del cajero
     const acceso = await AccesoCajero.create({
-      nombre_cajero: nombre.trim(),
+      nombre_cajero: cajero.nombre,
       turno,
       dispositivo,
       fecha_ingreso: new Date()
     });
-
-    // Generar token JWT para cajero
+ 
+    // Generar token JWT con el turno incluido
     const token = jwt.sign(
       { 
-        id: `cajero-${acceso.id}`,
-        nombre: nombre.trim(),
+        id: cajero.id,
+        nombre: cajero.nombre,
         rol: 'cajero',
         turno,
         acceso_id: acceso.id
@@ -91,18 +112,18 @@ const loginCajero = async (req, res) => {
       JWT_SECRET,
       { expiresIn: '12h' }
     );
-
+ 
     res.json({
       success: true,
       user: {
-        id: `cajero-${acceso.id}`,
-        name: nombre.trim(),
+        id: cajero.id,
+        name: cajero.nombre,
         role: 'cajero',
         turno
       },
       token
     });
-
+ 
   } catch (error) {
     console.error('Error en login cajero:', error);
     res.status(500).json({ 

@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import Modal from '../components/common/Modal'
-// 1. IMPORTANTE: Importar la imagen para que funcione al compilar
 import logoImg from '../assets/images/LogoAtavismo.png'
 
 function LoginPage() {
@@ -12,58 +11,48 @@ function LoginPage() {
   const [searchParams] = useSearchParams()
   const { loginAdmin, loginCajero, loginError, clearError } = useAuthStore()
 
-  // Estado del modal y rol
   const [showLoginModal, setShowLoginModal] = useState(true)
   const [activeRole, setActiveRole] = useState('ADMIN')
 
   // Formularios
   const [adminForm, setAdminForm] = useState({ email: '', password: '' })
-  const [cajeroForm, setCajeroForm] = useState({ nombre: '', turno: 'AM' })
+  const [cajeroForm, setCajeroForm] = useState({ nombre: '', password: '', turno: 'AM' })
 
   // UI
   const [showPassword, setShowPassword] = useState(false)
+  const [showCajeroPassword, setShowCajeroPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const roleParam = (searchParams.get('role') || '').toLowerCase()
     if (roleParam === 'cajero') setActiveRole('CAJERO')
     if (roleParam === 'admin') setActiveRole('ADMIN')
-    
-    // Limpiar errores al montar
     clearError()
-  }, []) // Eliminé dependencias innecesarias para que solo corra al inicio
+  }, [])
 
   const switchRole = (role) => {
     setActiveRole(role)
     clearError()
-    // Opcional: limpiar formularios al cambiar
     if (role === 'ADMIN') setAdminForm({ email: '', password: '' })
-    if (role === 'CAJERO') setCajeroForm({ nombre: '', turno: 'AM' })
+    if (role === 'CAJERO') setCajeroForm({ nombre: '', password: '', turno: 'AM' })
+    setShowPassword(false)
+    setShowCajeroPassword(false)
   }
 
   const handleAdminLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    // Aquí se llama a la función del store
     const result = await loginAdmin(adminForm.email, adminForm.password)
-    
     setIsLoading(false)
-    if (result.success) {
-        navigate('/admin/dashboard')
-    }
+    if (result.success) navigate('/admin/dashboard')
   }
 
   const handleCajeroLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    const result = await loginCajero(cajeroForm.nombre, cajeroForm.turno)
-    
+    const result = await loginCajero(cajeroForm.nombre, cajeroForm.password, cajeroForm.turno)
     setIsLoading(false)
-    if (result.success) {
-        navigate('/cajero/pedidos')
-    }
+    if (result.success) navigate('/cajero/pedidos')
   }
 
   return (
@@ -72,11 +61,10 @@ function LoginPage() {
         
         <Modal
           isOpen={showLoginModal}
-          // Quitamos onClose para que el usuario no cierre el login por error
           onClose={() => {}} 
           title={<>BIENVENIDO A <br /> ATAVISMO</>}
           subtitle={<>INGRESE SUS <br /> CREDENCIALES PARA INGRESAR</>}
-          imageSrc={logoImg} // 2. Usamos la variable importada
+          imageSrc={logoImg}
           imageAlt="Logo Atavismo"
           imageClass="!h-40 !w-40 shadow-xl object-contain mx-auto"
           maxWidth="max-w-lg"
@@ -171,8 +159,10 @@ function LoginPage() {
             
             /* FORMULARIO CAJERO */
             <form onSubmit={handleCajeroLogin} className="space-y-5 text-left">
+              
+              {/* Usuario */}
               <div>
-                <label className="block text-sm font-medium text-[var(--guindo-primario)] mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Usuario
                 </label>
                 <input
@@ -180,11 +170,36 @@ function LoginPage() {
                   value={cajeroForm.nombre}
                   onChange={(e) => setCajeroForm({ ...cajeroForm, nombre: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--guindo-primario)] outline-none"
-                  placeholder="Tu nombre"
+                  placeholder="Nombre de usuario"
                   required
                 />
               </div>
 
+              {/* Contraseña */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCajeroPassword ? 'text' : 'password'}
+                    value={cajeroForm.password}
+                    onChange={(e) => setCajeroForm({ ...cajeroForm, password: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--guindo-primario)] outline-none pr-10"
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCajeroPassword(!showCajeroPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showCajeroPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Turno */}
               <div>
                 <label className="block text-sm font-medium text-[var(--guindo-primario)] mb-2">
                   Seleccione su Turno:
@@ -227,7 +242,7 @@ function LoginPage() {
               <div className="pt-3">
                 <button
                   type="submit"
-                  disabled={isLoading || !cajeroForm.nombre.trim()}
+                  disabled={isLoading || !cajeroForm.nombre.trim() || !cajeroForm.password.trim()}
                   className="w-full py-3 bg-[var(--azul-primario)] hover:bg-blue-700 text-white rounded-lg font-bold transition-colors disabled:opacity-50 flex justify-center"
                 >
                   {isLoading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : 'Iniciar Turno'}

@@ -3,16 +3,19 @@ import api from './api';
 
 const authService = {
   async loginAdmin(email, password) {
-    // ✅ ruta correcta
     const response = await api.post('/auth/login/admin', { email, password });
-    if (response.data.token) localStorage.setItem('token', response.data.token);
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
     return response.data;
   },
 
-  async loginCajero(nombre, turno) {
-    // ✅ ruta correcta
-    const response = await api.post('/auth/login/cajero', { nombre, turno });
-    if (response.data.token) localStorage.setItem('token', response.data.token);
+  // Envía nombre + password + turno
+  async loginCajero(nombre, password, turno) {
+    const response = await api.post('/auth/login/cajero', { nombre, password, turno });
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
     return response.data;
   },
 
@@ -23,6 +26,14 @@ const authService = {
       localStorage.removeItem('token');
     }
   },
+
+  getToken() {
+    return localStorage.getItem('token');
+  },
+
+  isAuthenticated() {
+    return !!this.getToken();
+  }
 };
 
 export default authService;
