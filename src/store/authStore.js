@@ -60,6 +60,10 @@ const useAuthStore = create(
         }
       },
 
+      updateUser: (newUserData) => set((state) => ({
+        user: { ...state.user, ...newUserData }
+      })),
+
       logout: async () => {
         await authService.logout();
         set({

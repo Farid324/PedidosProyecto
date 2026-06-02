@@ -51,6 +51,13 @@ function AdminLayout() {
       badge: null 
     },
     { 
+      id: 'perfil', 
+      label: 'Mi Perfil', 
+      icon: User, 
+      path: '/admin/perfil',
+      badge: null 
+    },
+    { 
       id: 'configuracion', 
       label: 'Configuración', 
       icon: Settings, 
@@ -112,7 +119,7 @@ function AdminLayout() {
           actions={navbarActions}
           userMenuItems={userMenuItems}
           title="PANEL ADMINISTRADOR"
-          subtitle={`Usuario: ${user?.name || 'Administrador'}`}
+          subtitle={`Usuario: ${user?.nombre || 'Administrador'}`}
         />
 
         {/* Page Content */}

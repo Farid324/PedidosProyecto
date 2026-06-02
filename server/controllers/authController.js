@@ -42,9 +42,14 @@ const loginAdmin = async (req, res) => {
       success: true,
       user: {
         id: usuario.id,
-        name: usuario.nombre,
+        nombre: usuario.nombre,
         email: usuario.email,
-        role: usuario.rol
+        rol: usuario.rol,
+        carnet: usuario.carnet,
+        edad: (usuario.edad && usuario.anio_actualizacion_edad) ? usuario.edad + (new Date().getFullYear() - usuario.anio_actualizacion_edad) : usuario.edad,
+        telefono: usuario.telefono,
+        foto: usuario.foto,
+        activo: usuario.activo
       },
       token
     });
@@ -126,8 +131,14 @@ const loginCajero = async (req, res) => {
       success: true,
       user: {
         id: cajero.id,
-        name: cajero.nombre,
-        role: 'cajero',
+        nombre: cajero.nombre,
+        email: cajero.email,
+        rol: cajero.rol,
+        carnet: cajero.carnet,
+        edad: (cajero.edad && cajero.anio_actualizacion_edad) ? cajero.edad + (new Date().getFullYear() - cajero.anio_actualizacion_edad) : cajero.edad,
+        telefono: cajero.telefono,
+        foto: cajero.foto,
+        activo: cajero.activo,
         turno
       },
       token

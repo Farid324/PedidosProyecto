@@ -57,6 +57,13 @@ function CajeroLayout() {
       path: '/cajero/reportes',
       badge: null 
     },
+    { 
+      id: 'perfil', 
+      label: 'Mi Perfil', 
+      icon: User, 
+      path: '/cajero/perfil',
+      badge: null 
+    },
   ]
 
   const navbarActions = [
@@ -75,9 +82,14 @@ function CajeroLayout() {
 
   const userMenuItems = [
     {
+      label: 'Mi Perfil',
+      icon: User,
+      onClick: () => navigate('/cajero/perfil')
+    },
+    {
       label: 'Mi Turno',
       icon: Clock,
-      text: `${turno} - ${user?.name}`,
+      text: `${turno} - ${user?.nombre}`,
       onClick: () => {}
     },
     {
@@ -108,7 +120,7 @@ function CajeroLayout() {
           user={user}
           actions={navbarActions}
           userMenuItems={userMenuItems}
-          title={`Cajero: ${user?.name}`}
+          title={`Cajero: ${user?.nombre}`}
           subtitle={`Turno ${turno}`}
         />
 

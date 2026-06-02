@@ -9,6 +9,7 @@ import GestionMenuPage from './pages/Admin/Gestion/GestionMenuPage'
 import ReportesPageAdmin from './pages/Admin/Reportes/ReportesPage'
 import UsuariosPage from './pages/Admin/Usuarios/UsuariosPage'
 import ConfiguracionPage from './pages/Admin/Configuracion/ConfiguracionPage'
+import PerfilPage from './pages/Admin/Perfil/PerfilPage'
 import CajeroDashboard from './pages/employee/Dashboard/CajeroDashboard'
 import PedidosPage from './pages/employee/Pedidos/PedidosPage'
 import FacturacionPage from './pages/employee/Facturacion/FacturacionPage'
@@ -85,6 +86,10 @@ const router = createBrowserRouter([
         path: 'configuracion',
         element: <ConfiguracionPage />
       },
+      {
+        path: 'perfil',
+        element: <PerfilPage />
+      },
     ]
   },
   {
@@ -114,6 +119,10 @@ const router = createBrowserRouter([
       {
         path: 'reportes',
         element: <ReportesPageEmployee />
+      },
+      {
+        path: 'perfil',
+        element: <PerfilPage />
       }
     ]
   },

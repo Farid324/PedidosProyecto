@@ -23,9 +23,15 @@ const deleteUsuario = async (id) => {
   return response.data;
 };
 
+const cambiarPassword = async (id, passwordData) => {
+  const response = await axios.put(`${API_URL}/${id}/password`, passwordData);
+  return response.data;
+};
+
 export default {
   getUsuarios,
   createUsuario,
   updateUsuario,
-  deleteUsuario
+  deleteUsuario,
+  cambiarPassword
 };

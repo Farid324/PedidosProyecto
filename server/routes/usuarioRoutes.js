@@ -12,6 +12,9 @@ router.post('/', usuarioController.createUsuario);
 // Actualizar usuario existente
 router.put('/:id', usuarioController.updateUsuario);
 
+// Cambiar contraseña
+router.put('/:id/password', usuarioController.cambiarPassword);
+
 // Desactivar (eliminar lógico) usuario
 router.delete('/:id', usuarioController.deleteUsuario);
 
