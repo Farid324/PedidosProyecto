@@ -163,14 +163,14 @@ function LoginPage() {
               {/* Usuario */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Usuario
+                  Usuario o Correo
                 </label>
                 <input
                   type="text"
                   value={cajeroForm.nombre}
                   onChange={(e) => setCajeroForm({ ...cajeroForm, nombre: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--guindo-primario)] outline-none"
-                  placeholder="Nombre de usuario"
+                  placeholder="Nombre de usuario o correo"
                   required
                 />
               </div>

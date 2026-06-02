@@ -8,10 +8,14 @@ const authMiddleware = require('../middlewares/authMiddleware');
 router.use(authMiddleware);
 
 router.get('/', pedidoController.getPedidos);
+router.get('/mesas-ocupadas', pedidoController.getMesasOcupadas);
+router.get('/mesa/:mesa', pedidoController.getPedidoByMesa);
 router.get('/:id', pedidoController.getPedidoById);
 router.post('/', pedidoController.createPedido);
 router.put('/:id', pedidoController.updatePedido);
+router.put('/:id/items', pedidoController.updatePedidoItems);
 router.put('/:id/estado', pedidoController.updateEstadoPedido);
+router.put('/:id/finalizar', pedidoController.finalizarPedido);
 router.delete('/:id', pedidoController.cancelPedido);
 
 module.exports = router;

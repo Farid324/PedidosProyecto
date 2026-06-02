@@ -2,8 +2,7 @@
 import { useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-export default function TableSelector({ selectedMesa, onSelectMesa }) {
-  // Generamos un array de 20 mesas
+export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupadas = [] }) {
   const mesas = Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
     nombre: `Mesa ${i + 1}`
@@ -44,15 +43,45 @@ export default function TableSelector({ selectedMesa, onSelectMesa }) {
     if (!isDragging) onSelectMesa(id)
   }
 
+  const getMesaState = (mesaId) => {
+    if (selectedMesa === mesaId) return 'selected'
+    if (mesasOcupadas.includes(mesaId)) return 'occupied'
+    return 'free'
+  }
+
+  const getMesaClasses = (mesaId) => {
+    const state = getMesaState(mesaId)
+    const base = 'min-w-[200px] h-20 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 transform'
+    
+    switch (state) {
+      case 'selected':
+        return `${base} bg-[var(--guindo-primario)] border-[var(--guindo-primario)] text-white shadow-md scale-105`
+      case 'occupied':
+        return `${base} bg-orange-50 border-orange-400 text-orange-600 hover:border-orange-500 shadow-sm`
+      default:
+        return `${base} bg-white border-gray-200 text-gray-500 hover:border-[var(--guindo-primario)] hover:text-[var(--guindo-primario)]`
+    }
+  }
+
   return (
     <div className='card bg-white p-4 rounded-xl shrink-0 shadow-sm border border-gray-100'>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[var(--gris-primario)]">Seleccionar Mesa</h2>
-        {selectedMesa && (
-          <span className="text-sm font-medium px-3 py-1 bg-green-100 text-green-700 rounded-full border border-green-200">
-            Mesa {selectedMesa} Activa
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-gray-200 border border-gray-300"></span>
+            <span className="text-xs text-gray-500">Libre</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-orange-400"></span>
+            <span className="text-xs text-gray-500">Ocupada</span>
+          </div>
+          {selectedMesa && (
+            <span className="text-sm font-medium px-3 py-1 bg-green-100 text-green-700 rounded-full border border-green-200">
+              Mesa {selectedMesa} Activa
+            </span>
+          )}
+        </div>
       </div>
       
       <div className="relative group">
@@ -76,16 +105,13 @@ export default function TableSelector({ selectedMesa, onSelectMesa }) {
             <div
               key={mesa.id}
               onClick={() => handleClick(mesa.id)}
-              className={`
-                min-w-[200px] h-20 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 transform
-                ${selectedMesa === mesa.id 
-                  ? 'bg-[var(--guindo-primario)] border-[var(--guindo-primario)] text-white shadow-md scale-105' 
-                  : 'bg-white border-gray-200 text-gray-500 hover:border-[var(--guindo-primario)] hover:text-[var(--guindo-primario)]'
-                }
-              `}
+              className={getMesaClasses(mesa.id)}
             >
               <span className="text-xs uppercase font-bold tracking-wider">Mesa</span>
               <span className="text-lg font-bold">{mesa.id}</span>
+              {mesasOcupadas.includes(mesa.id) && selectedMesa !== mesa.id && (
+                <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Ocupada</span>
+              )}
             </div>
           ))}
         </div>

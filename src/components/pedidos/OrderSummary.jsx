@@ -1,5 +1,5 @@
 // src/components/pedidos/OrderSummary.jsx
-import { ShoppingCart, Plus, Minus, Trash2, FileText, Printer, CheckCircle, Save, DollarSign } from 'lucide-react'
+import { ShoppingCart, Plus, Minus, Trash2, FileText, Printer, CheckCircle, Save, CreditCard } from 'lucide-react'
 
 export default function OrderSummary({
   selectedMesa,
@@ -12,35 +12,43 @@ export default function OrderSummary({
   setObservaciones,
   totalPedido,
   onUpdateQuantity,
-  onRemoveItem
+  onRemoveItem,
+  onRegistrar,
+  onFinalizar,
+  onComanda,
+  onCuenta,
+  onImprimir,
+  pagoQR,
+  pedidoActivo,
+  validationError
 }) {
   return (
-    // CAMBIO 1: 'h-full' es vital. 
-    // Le dice a la tarjeta: "Mide exactamente lo que mide tu contenedor padre (la pantalla menos el header)".
-    // Quitamos 'h-auto' y 'max-h-full'.
-    <div className='card bg-white rounded-xl w-auto shrink-0 h-full flex flex-col shadow-lg border border-gray-100 overflow-hidden'>
+    <div className='card bg-white rounded-xl w-auto lg:w-96 shrink-0 h-full flex flex-col shadow-lg border border-gray-100 overflow-hidden'>
       
-      {/* 1. Header (Fijo - No se mueve ni encoge) */}
+      {/* 1. Header */}
       <div className="bg-white border-b border-gray-200 shrink-0">
         <div className="flex justify-between items-center mb-2">
           <h2 className="font-bold text-lg text-gray-800">Orden Actual</h2>
-          <span className="bg-[var(--guindo-primario)] text-white text-xs px-2 py-1 rounded font-bold">
-            Mesa: {selectedMesa || '--'}
+          <span className={`text-xs px-2 py-1 rounded font-bold ${pedidoActivo ? 'bg-orange-500 text-white' : 'bg-[var(--guindo-primario)] text-white'}`}>
+            Mesa: {selectedMesa || '--'} {pedidoActivo ? '• Ocupada' : ''}
           </span>
         </div>
 
         <div className="flex gap-2">
-          <input 
-            type="text" 
-            placeholder="Razón Social" 
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)]"
-            value={clienteInfo.razonSocial}
-            onChange={(e) => setClienteInfo({...clienteInfo, razonSocial: e.target.value})}
-          />
+          <div className="flex-1">
+            <input 
+              type="text" 
+              placeholder="Razón Social *" 
+              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)] ${validationError ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+              value={clienteInfo.razonSocial}
+              onChange={(e) => setClienteInfo({...clienteInfo, razonSocial: e.target.value})}
+            />
+            {validationError && <p className="text-xs text-red-500 mt-0.5">Obligatorio</p>}
+          </div>
           <input 
             type="text" 
             placeholder="NIT / CI (Opcional)" 
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)]"
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)]"
             value={clienteInfo.nit}
             onChange={(e) => setClienteInfo({...clienteInfo, nit: e.target.value})}
           />
@@ -62,11 +70,7 @@ export default function OrderSummary({
         </div>
       </div>
 
-      {/* 2. Lista de Items (Elástica - Scrollable) */}
-      {/* CAMBIO 2: Quitamos 'max-h-[400px]'. 
-          Usamos 'flex-1' para que ocupe TODO el espacio sobrante.
-          Si hay muchos items, el scroll aparece aquí. Si hay pocos, queda espacio en blanco, 
-          pero el Footer siempre estará pegado al final de la tarjeta. */}
+      {/* 2. Lista de Items */}
       <div className="flex-1 overflow-y-auto py-2 pr-2 space-y-2 bg-[var(--blanco-primario)] custom-scrollbar">
         {Object.keys(carrito).length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-[var(--gris-primario)] opacity-60">
@@ -104,10 +108,10 @@ export default function OrderSummary({
         )}
       </div>
 
-      {/* 3. Footer de Acciones (Fijo - Siempre visible abajo) */}
-      <div className=" bg-white border-gray-200 space-y-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] shrink-0 z-10">
+      {/* 3. Footer */}
+      <div className="bg-white border-gray-200 space-y-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] shrink-0 z-10">
         <textarea 
-          placeholder="Observaciones..." 
+          placeholder="Observaciones (Nº viper, notas de cocina)..." 
           className="w-full pt-2 pr-2 pl-2 pb-6 text-xs bg-gray-50 border text-[var(--gris-primario)] border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)] resize-none"
           rows="1" 
           value={observaciones}
@@ -115,32 +119,50 @@ export default function OrderSummary({
         />
 
         <div className="flex flex-col gap-2">
-          {/* Botones pequeños arriba */}
           <div className='flex gap-2'>
-            <button className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-uno)] rounded-lg hover:bg-[var(--color-boton-uno)] border-2 border-[var(--color-boton-uno)] hover:text-white">
+            <button 
+              onClick={onRegistrar}
+              className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-uno)] rounded-lg hover:bg-[var(--color-boton-uno)] border-2 border-[var(--color-boton-uno)] hover:text-white transition-colors"
+            >
               <Save size={20} className="mb-0.5"/>
               <span className="text-xs font-bold uppercase">Registrar</span>
             </button>
-            <button className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-dos)] rounded-lg hover:bg-[var(--color-boton-dos)] border-2 border-[var(--color-boton-dos)] hover:text-white">
+            <button 
+              onClick={onFinalizar}
+              className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-dos)] rounded-lg hover:bg-[var(--color-boton-dos)] border-2 border-[var(--color-boton-dos)] hover:text-white transition-colors"
+            >
               <CheckCircle size={20} className="mb-0.5"/>
               <span className="text-xs font-bold uppercase">Finalizar</span>
             </button>
           </div>
           <div className='flex gap-2'>
-            <button className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-tres)] rounded-lg hover:bg-[var(--color-boton-tres)] border-2 border-[var(--color-boton-tres)] hover:text-white">
+            <button 
+              onClick={onComanda}
+              className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-tres)] rounded-lg hover:bg-[var(--color-boton-tres)] border-2 border-[var(--color-boton-tres)] hover:text-white transition-colors"
+            >
               <FileText size={20} className="mb-0.5"/>
               <span className="text-xs font-bold uppercase">Comanda</span>
             </button>
-            <button className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-cuatro)] rounded-lg hover:bg-[var(--color-boton-cuatro)] border-2 border-[var(--color-boton-cuatro)] hover:text-white">
-              <Printer size={20} className="mb-0.5"/>
-              <span className="text-xs font-bold uppercase">Cuenta</span>
+            <button 
+              onClick={onCuenta}
+              className={`flex flex-col items-center w-full justify-center p-1.5 rounded-lg border-2 transition-colors ${
+                pagoQR 
+                  ? 'bg-[var(--color-boton-cuatro)] text-white border-[var(--color-boton-cuatro)]' 
+                  : 'bg-white text-[var(--color-boton-cuatro)] border-[var(--color-boton-cuatro)] hover:bg-[var(--color-boton-cuatro)] hover:text-white'
+              }`}
+            >
+              <CreditCard size={20} className="mb-0.5"/>
+              <span className="text-xs font-bold uppercase">Cuenta {pagoQR ? '(QR)' : ''}</span>
             </button>
           </div>
           
-          {/* Botón Facturar grande abajo ocupando todo el ancho */}
-          <button className="col-span-4 flex items-center justify-center gap-2 p-2 bg-[var(--color-boton-cinco)] text-white rounded-lg hover:opacity-90 font-bold shadow-md transition-all">
-            <DollarSign size={20}/>
-            FACTURAR <span className="ml-1 text-white">| Bs. {totalPedido.toFixed(2)}</span>
+          {/* Botón Imprimir */}
+          <button 
+            onClick={onImprimir}
+            className="col-span-4 flex items-center justify-center gap-2 p-2 bg-[var(--color-boton-cinco)] text-white rounded-lg hover:opacity-90 font-bold shadow-md transition-all"
+          >
+            <Printer size={20}/>
+            IMPRIMIR <span className="ml-1 text-white">| Bs. {totalPedido.toFixed(2)}</span>
           </button>
         </div>
       </div>

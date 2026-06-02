@@ -37,10 +37,24 @@ function AdminLayout() {
       badge: null 
     },
     { 
+      id: 'usuarios', 
+      label: 'Usuarios', 
+      icon: Users, 
+      path: '/admin/usuarios',
+      badge: null 
+    },
+    { 
       id: 'reportes', 
       label: 'Reportes', 
       icon: TrendingUp, 
       path: '/admin/reportes',
+      badge: null 
+    },
+    { 
+      id: 'configuracion', 
+      label: 'Configuración', 
+      icon: Settings, 
+      path: '/admin/configuracion',
       badge: null 
     },
   ]

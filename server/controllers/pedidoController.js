@@ -1,6 +1,7 @@
 // server/controllers/pedidoController.js
 const { Pedido, DetallePedido, Producto } = require('../models');
 const { sequelize } = require('../config/database');
+const { Op } = require('sequelize');
 
 // Obtener pedidos
 const getPedidos = async (req, res) => {
@@ -8,7 +9,6 @@ const getPedidos = async (req, res) => {
     const { estado, fecha, cajero } = req.query;
     const where = {};
 
-    // Filtros opcionales
     if (estado) where.estado = estado;
     if (cajero) where.cajero_nombre = cajero;
     
@@ -22,7 +22,6 @@ const getPedidos = async (req, res) => {
       };
     }
 
-    // Si es cajero, solo ver sus pedidos
     if (req.user.rol === 'cajero') {
       where.cajero_nombre = req.user.nombre;
     }
@@ -36,16 +35,10 @@ const getPedidos = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
-    res.json({
-      success: true,
-      data: pedidos
-    });
+    res.json({ success: true, data: pedidos });
   } catch (error) {
     console.error('Error obteniendo pedidos:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error obteniendo pedidos'
-    });
+    res.status(500).json({ success: false, error: 'Error obteniendo pedidos' });
   }
 };
 
@@ -53,31 +46,56 @@ const getPedidos = async (req, res) => {
 const getPedidoById = async (req, res) => {
   try {
     const { id } = req.params;
-
     const pedido = await Pedido.findByPk(id, {
-      include: [{
-        model: DetallePedido,
-        include: [{ model: Producto }]
-      }]
+      include: [{ model: DetallePedido, include: [{ model: Producto }] }]
     });
 
     if (!pedido) {
-      return res.status(404).json({
-        success: false,
-        error: 'Pedido no encontrado'
-      });
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
     }
 
-    res.json({
-      success: true,
-      data: pedido
-    });
+    res.json({ success: true, data: pedido });
   } catch (error) {
     console.error('Error obteniendo pedido:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error obteniendo pedido'
+    res.status(500).json({ success: false, error: 'Error obteniendo pedido' });
+  }
+};
+
+// Obtener pedido activo por mesa
+const getPedidoByMesa = async (req, res) => {
+  try {
+    const { mesa } = req.params;
+
+    const pedido = await Pedido.findOne({
+      where: {
+        mesa: parseInt(mesa),
+        estado: { [Op.in]: ['pendiente', 'en_proceso'] }
+      },
+      include: [{ model: DetallePedido, include: [{ model: Producto }] }],
+      order: [['created_at', 'DESC']]
     });
+
+    res.json({ success: true, data: pedido });
+  } catch (error) {
+    console.error('Error obteniendo pedido por mesa:', error);
+    res.status(500).json({ success: false, error: 'Error obteniendo pedido por mesa' });
+  }
+};
+
+// Obtener mesas ocupadas
+const getMesasOcupadas = async (req, res) => {
+  try {
+    const pedidosActivos = await Pedido.findAll({
+      where: { estado: { [Op.in]: ['pendiente', 'en_proceso'] } },
+      attributes: ['mesa'],
+      group: ['mesa']
+    });
+
+    const mesas = pedidosActivos.map(p => p.mesa);
+    res.json({ success: true, data: mesas });
+  } catch (error) {
+    console.error('Error obteniendo mesas ocupadas:', error);
+    res.status(500).json({ success: false, error: 'Error obteniendo mesas ocupadas' });
   }
 };
 
@@ -86,30 +104,33 @@ const createPedido = async (req, res) => {
   const t = await sequelize.transaction();
   
   try {
-    const { mesa, items, observaciones } = req.body;
+    const { mesa, items, observaciones, razon_social, nit, tipo_pedido } = req.body;
     const { nombre, turno } = req.user;
 
-    // Crear pedido principal
+    if (!razon_social) {
+      await t.rollback();
+      return res.status(400).json({ success: false, error: 'La razón social es obligatoria' });
+    }
+
     const pedido = await Pedido.create({
       mesa,
       cajero_nombre: nombre,
       turno: turno || 'AM',
+      razon_social,
+      nit: nit || null,
+      tipo_pedido: tipo_pedido || 'mesa',
       observaciones,
       estado: 'pendiente'
     }, { transaction: t });
 
     let subtotal = 0;
 
-    // Crear detalles del pedido
     for (const item of items) {
       const producto = await Producto.findByPk(item.producto_id, { transaction: t });
       
       if (!producto) {
         await t.rollback();
-        return res.status(400).json({
-          success: false,
-          error: `Producto con ID ${item.producto_id} no encontrado`
-        });
+        return res.status(400).json({ success: false, error: `Producto con ID ${item.producto_id} no encontrado` });
       }
 
       const itemSubtotal = producto.precio * item.cantidad;
@@ -125,33 +146,107 @@ const createPedido = async (req, res) => {
       }, { transaction: t });
     }
 
-    // Actualizar totales del pedido
+    await pedido.update({ subtotal, total: subtotal }, { transaction: t });
+    await t.commit();
+
+    const pedidoCompleto = await Pedido.findByPk(pedido.id, {
+      include: [{ model: DetallePedido, include: [{ model: Producto }] }]
+    });
+
+    res.status(201).json({ success: true, data: pedidoCompleto });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error creando pedido:', error);
+    res.status(500).json({ success: false, error: 'Error creando pedido' });
+  }
+};
+
+// Actualizar items de un pedido existente
+const updatePedidoItems = async (req, res) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { id } = req.params;
+    const { items, observaciones, razon_social, nit, tipo_pedido } = req.body;
+
+    const pedido = await Pedido.findByPk(id, { transaction: t });
+
+    if (!pedido) {
+      await t.rollback();
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
+
+    // Borrar detalles anteriores
+    await DetallePedido.destroy({ where: { pedido_id: id }, transaction: t });
+
+    let subtotal = 0;
+
+    for (const item of items) {
+      const producto = await Producto.findByPk(item.producto_id, { transaction: t });
+      
+      if (!producto) {
+        await t.rollback();
+        return res.status(400).json({ success: false, error: `Producto con ID ${item.producto_id} no encontrado` });
+      }
+
+      const itemSubtotal = producto.precio * item.cantidad;
+      subtotal += itemSubtotal;
+
+      await DetallePedido.create({
+        pedido_id: pedido.id,
+        producto_id: item.producto_id,
+        cantidad: item.cantidad,
+        precio_unitario: producto.precio,
+        subtotal: itemSubtotal,
+        observaciones: item.observaciones
+      }, { transaction: t });
+    }
+
+    // Actualizar pedido
     await pedido.update({
       subtotal,
-      total: subtotal
+      total: subtotal,
+      observaciones: observaciones !== undefined ? observaciones : pedido.observaciones,
+      razon_social: razon_social || pedido.razon_social,
+      nit: nit !== undefined ? nit : pedido.nit,
+      tipo_pedido: tipo_pedido || pedido.tipo_pedido,
     }, { transaction: t });
 
     await t.commit();
 
-    // Obtener pedido completo con detalles
     const pedidoCompleto = await Pedido.findByPk(pedido.id, {
-      include: [{
-        model: DetallePedido,
-        include: [{ model: Producto }]
-      }]
+      include: [{ model: DetallePedido, include: [{ model: Producto }] }]
     });
 
-    res.status(201).json({
-      success: true,
-      data: pedidoCompleto
-    });
+    res.json({ success: true, data: pedidoCompleto });
   } catch (error) {
     await t.rollback();
-    console.error('Error creando pedido:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error creando pedido'
+    console.error('Error actualizando items del pedido:', error);
+    res.status(500).json({ success: false, error: 'Error actualizando items del pedido' });
+  }
+};
+
+// Finalizar pedido (liberar mesa)
+const finalizarPedido = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { metodo_pago } = req.body;
+
+    const pedido = await Pedido.findByPk(id);
+
+    if (!pedido) {
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
+    }
+
+    await pedido.update({
+      estado: 'completado',
+      metodo_pago: metodo_pago || pedido.metodo_pago,
     });
+
+    res.json({ success: true, data: pedido, message: 'Pedido finalizado, mesa liberada' });
+  } catch (error) {
+    console.error('Error finalizando pedido:', error);
+    res.status(500).json({ success: false, error: 'Error finalizando pedido' });
   }
 };
 
@@ -159,32 +254,25 @@ const createPedido = async (req, res) => {
 const updatePedido = async (req, res) => {
   try {
     const { id } = req.params;
-    const { mesa, observaciones } = req.body;
+    const { mesa, observaciones, metodo_pago, pago_qr } = req.body;
 
     const pedido = await Pedido.findByPk(id);
 
     if (!pedido) {
-      return res.status(404).json({
-        success: false,
-        error: 'Pedido no encontrado'
-      });
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
     }
 
     await pedido.update({
-      mesa,
-      observaciones
+      mesa: mesa !== undefined ? mesa : pedido.mesa,
+      observaciones: observaciones !== undefined ? observaciones : pedido.observaciones,
+      metodo_pago: metodo_pago !== undefined ? metodo_pago : pedido.metodo_pago,
+      pago_qr: pago_qr !== undefined ? pago_qr : pedido.pago_qr,
     });
 
-    res.json({
-      success: true,
-      data: pedido
-    });
+    res.json({ success: true, data: pedido });
   } catch (error) {
     console.error('Error actualizando pedido:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error actualizando pedido'
-    });
+    res.status(500).json({ success: false, error: 'Error actualizando pedido' });
   }
 };
 
@@ -197,25 +285,14 @@ const updateEstadoPedido = async (req, res) => {
     const pedido = await Pedido.findByPk(id);
 
     if (!pedido) {
-      return res.status(404).json({
-        success: false,
-        error: 'Pedido no encontrado'
-      });
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
     }
 
     await pedido.update({ estado });
-
-    res.json({
-      success: true,
-      data: pedido,
-      message: `Pedido actualizado a ${estado}`
-    });
+    res.json({ success: true, data: pedido, message: `Pedido actualizado a ${estado}` });
   } catch (error) {
     console.error('Error actualizando estado:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error actualizando estado del pedido'
-    });
+    res.status(500).json({ success: false, error: 'Error actualizando estado del pedido' });
   }
 };
 
@@ -223,36 +300,29 @@ const updateEstadoPedido = async (req, res) => {
 const cancelPedido = async (req, res) => {
   try {
     const { id } = req.params;
-
     const pedido = await Pedido.findByPk(id);
 
     if (!pedido) {
-      return res.status(404).json({
-        success: false,
-        error: 'Pedido no encontrado'
-      });
+      return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
     }
 
     await pedido.update({ estado: 'cancelado' });
-
-    res.json({
-      success: true,
-      message: 'Pedido cancelado correctamente'
-    });
+    res.json({ success: true, message: 'Pedido cancelado correctamente' });
   } catch (error) {
     console.error('Error cancelando pedido:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error cancelando pedido'
-    });
+    res.status(500).json({ success: false, error: 'Error cancelando pedido' });
   }
 };
 
 module.exports = {
   getPedidos,
   getPedidoById,
+  getPedidoByMesa,
+  getMesasOcupadas,
   createPedido,
   updatePedido,
+  updatePedidoItems,
   updateEstadoPedido,
+  finalizarPedido,
   cancelPedido
 };

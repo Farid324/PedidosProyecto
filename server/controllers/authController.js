@@ -71,9 +71,18 @@ const loginCajero = async (req, res) => {
       });
     }
  
-    // Buscar el usuario cajero por nombre
+    const { Op } = require('sequelize');
+    
+    // Buscar el usuario cajero por nombre o correo
     const cajero = await Usuario.findOne({ 
-      where: { nombre: nombre.trim(), rol: 'cajero', activo: true } 
+      where: { 
+        [Op.or]: [
+          { nombre: nombre.trim() },
+          { email: nombre.trim() }
+        ],
+        rol: 'cajero', 
+        activo: true 
+      } 
     });
  
     if (!cajero) {

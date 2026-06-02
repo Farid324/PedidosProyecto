@@ -1,4 +1,5 @@
 // server/index.js
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
@@ -11,6 +12,8 @@ const pedidoRoutes = require('./routes/pedidoRoutes');
 const facturaRoutes = require('./routes/facturaRoutes');
 const menuRoutes = require('./routes/menuRoutes');
 const reporteRoutes = require('./routes/reporteRoutes');
+const usuarioRoutes = require('./routes/usuarioRoutes');
+const configuracionRoutes = require('./routes/configuracionRoutes');
 
 // Importar middleware de error
 const errorHandler = require('./middlewares/errorHandler');
@@ -36,6 +39,8 @@ app.use('/api/pedidos', pedidoRoutes);
 app.use('/api/facturas', facturaRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/reportes', reporteRoutes);
+app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/config', configuracionRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
