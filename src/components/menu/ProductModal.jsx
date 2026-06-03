@@ -26,6 +26,7 @@ function ProductModal({
   categorias = [],
 }) {
   const [form, setForm] = useState(initialValues);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Estado para controlar qué pestaña está activa: 'upload' o 'url'
   const [imageMode, setImageMode] = useState('upload'); 
@@ -36,6 +37,7 @@ function ProductModal({
   useEffect(() => {
     if (isOpen) {
       setForm(initialValues);
+      setIsSubmitting(false);
       
       // Determinar qué modo mostrar al abrir
       // Si tiene base64, mostramos upload. Si tiene url, mostramos url.
@@ -53,20 +55,25 @@ function ProductModal({
     () => categorias.map((c) => ({ value: c.id, label: c.nombre })), [categorias]
   );
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!categorias.length) return;
     
-    const payload = {
-      ...form,
-      precio: Number(form.precio || 0),
-      categoria_id: Number(form.categoria_id),
-      // Limpiamos el campo que no se esté usando para no confundir a la BD
-      imagen_url: imageMode === 'url' ? form.imagen_url : null,
-      imagen_base64: imageMode === 'upload' ? form.imagen_base64 : null
-    };
-    
-    onSave(payload);
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        ...form,
+        precio: Number(form.precio || 0),
+        categoria_id: Number(form.categoria_id),
+        // Limpiamos el campo que no se esté usando para no confundir a la BD
+        imagen_url: imageMode === 'url' ? form.imagen_url : null,
+        imagen_base64: imageMode === 'upload' ? form.imagen_base64 : null
+      };
+      
+      await onSave(payload);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // --- Manejo de Archivos (Base64) ---
@@ -275,14 +282,24 @@ function ProductModal({
           </button>
           <button
             type="submit"
-            disabled={!categorias.length}
-            className={`px-4 py-2 rounded-lg text-white transition-colors ${
+            disabled={!categorias.length || isSubmitting}
+            className={`px-4 py-2 rounded-lg text-white transition-colors flex items-center gap-2 ${
               categorias.length 
                 ? 'bg-[var(--guindo-primario)] hover:opacity-90' 
                 : 'bg-gray-400 cursor-not-allowed'
-            }`}
+            } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            {isEditing ? 'Guardar Cambios' : 'Crear Platillo'}
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Guardando...
+              </>
+            ) : (
+              isEditing ? 'Guardar Cambios' : 'Crear Platillo'
+            )}
           </button>
         </div>
       </form>

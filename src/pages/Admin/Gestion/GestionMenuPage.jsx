@@ -1,11 +1,12 @@
 // src/pages/Admin/Gestion/GestionMenuPage.jsx
 
 import { useEffect, useMemo, useState } from 'react';
-import { PlusCircle, Tag, Search, Edit3, Trash2 } from 'lucide-react';
+import { PlusCircle, Tag, Search, Edit3, Trash2, Check, X } from 'lucide-react';
 import useAuthStore from '../../../store/authStore';
 import menuService from '../../../services/menuService';
 import CategoryModal from '../../../components/menu/CategoryModal';
 import ProductModal from '../../../components/menu/ProductModal';
+import Modal from '../../../components/common/Modal';
 
 function GestionMenuPage() {
   const { role } = useAuthStore();
@@ -21,8 +22,40 @@ function GestionMenuPage() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
 
-  const fetchAll = async () => {
-    setLoading(true);
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, isDeleting: false });
+
+  const playSuccessSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const playNote = (frequency, startTime, duration) => {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime + startTime);
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start(audioCtx.currentTime + startTime);
+        oscillator.stop(audioCtx.currentTime + startTime + duration);
+      };
+      playNote(523.25, 0, 0.15); // C5
+      playNote(659.25, 0.1, 0.3); // E5
+    } catch (e) {
+      console.error('Audio playback failed', e);
+    }
+  };
+
+  const showToast = (message, type = 'success') => {
+    if (type === 'success') playSuccessSound();
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 3000);
+  };
+
+  const fetchAll = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const [catsRes, prodsRes] = await Promise.all([
         menuService.getCategorias(),
@@ -38,7 +71,7 @@ function GestionMenuPage() {
       console.error(e);
       setProductos([]); 
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -66,26 +99,39 @@ function GestionMenuPage() {
     try {
       if (editingCategory) {
         await menuService.updateCategoria(editingCategory.id, data);
+        showToast('Categoría actualizada correctamente', 'success');
       } else {
         await menuService.createCategoria(data);
+        showToast('Categoría creada correctamente', 'success');
       }
       setCatOpen(false);
       setEditingCategory(null);
-      await fetchAll();
+      await fetchAll(false);
     } catch (e) {
       console.error(e);
-      alert(e?.response?.data?.error || 'Error guardando categoría');
+      showToast(e?.response?.data?.error || 'Error guardando categoría', 'error');
     }
   };
 
-  const removeCategoria = async (cat) => {
-    if (!confirm(`¿Eliminar categoría "${cat.nombre}"?`)) return;
-    try {
-      await menuService.deleteCategoria(cat.id);
-      await fetchAll();
-    } catch (e) {
-      alert(e?.response?.data?.error || 'No se pudo eliminar (puede tener productos asociados)');
-    }
+  const removeCategoria = (cat) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Categoría',
+      message: `¿Estás seguro de que deseas eliminar la categoría "${cat.nombre}"?`,
+      isDeleting: false,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isDeleting: true }));
+        try {
+          await menuService.deleteCategoria(cat.id);
+          await fetchAll(false);
+          showToast('Categoría eliminada correctamente', 'success');
+          setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, isDeleting: false });
+        } catch (e) {
+          showToast(e?.response?.data?.error || 'No se pudo eliminar (puede tener productos asociados)', 'error');
+          setConfirmDialog(prev => ({ ...prev, isDeleting: false }));
+        }
+      }
+    });
   };
 
   const openNewProducto = () => { setEditingProduct(null); setProdOpen(true); };
@@ -96,34 +142,48 @@ function GestionMenuPage() {
     try {
       if (editingProduct) {
         await menuService.updateProducto(editingProduct.id, payload);
+        showToast('Platillo actualizado correctamente', 'success');
       } else {
         await menuService.createProducto(payload);
+        showToast('Platillo creado correctamente', 'success');
       }
       setProdOpen(false);
       setEditingProduct(null);
-      await fetchAll();
+      await fetchAll(false);
     } catch (e) {
       console.error(e);
-      alert(e?.response?.data?.error || 'Error guardando producto');
+      showToast(e?.response?.data?.error || 'Error guardando producto', 'error');
     }
   };
 
-  const removeProducto = async (p) => {
-    if (!confirm(`¿Eliminar producto "${p.nombre}"?`)) return;
-    try {
-      await menuService.deleteProducto(p.id);
-      await fetchAll();
-    } catch (e) {
-      alert('No se pudo eliminar el producto');
-    }
+  const removeProducto = (p) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Platillo',
+      message: `¿Estás seguro de que deseas eliminar el platillo "${p.nombre}"?`,
+      isDeleting: false,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isDeleting: true }));
+        try {
+          await menuService.deleteProducto(p.id);
+          await fetchAll(false);
+          showToast('Platillo eliminado correctamente', 'success');
+          setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, isDeleting: false });
+        } catch (e) {
+          showToast('No se pudo eliminar el producto', 'error');
+          setConfirmDialog(prev => ({ ...prev, isDeleting: false }));
+        }
+      }
+    });
   };
 
   const toggleDisponible = async (p) => {
     try {
       await menuService.setDisponibilidad(p.id, !p.disponible);
-      await fetchAll();
+      await fetchAll(false);
+      showToast(p.disponible ? 'Platillo ocultado' : 'Platillo ahora visible', 'success');
     } catch (e) {
-      alert('No se pudo cambiar el estado');
+      showToast('No se pudo cambiar el estado', 'error');
     }
   };
 
@@ -294,6 +354,57 @@ function GestionMenuPage() {
         isEditing={!!editingProduct}
         categorias={categorias}
       />
+
+      <Modal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => !confirmDialog.isDeleting && setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        title={confirmDialog.title}
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">{confirmDialog.message}</p>
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
+            <button
+              onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+              disabled={confirmDialog.isDeleting}
+              className="px-4 py-2 rounded-lg border text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDialog.onConfirm}
+              disabled={confirmDialog.isDeleting}
+              className="px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center gap-2 font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+            >
+              {confirmDialog.isDeleting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Eliminando...
+                </>
+              ) : 'Sí, eliminar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Toast Facherísimo */}
+      {toast.visible && (
+        <div className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 animate-bounce ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+          {toast.type === 'success' ? (
+            <div className="bg-white/20 p-1.5 rounded-full">
+              <Check size={20} className="text-white" />
+            </div>
+          ) : (
+            <div className="bg-white/20 p-1.5 rounded-full">
+              <X size={20} className="text-white" />
+            </div>
+          )}
+          <p className="font-semibold text-sm">{toast.message}</p>
+        </div>
+      )}
     </div>
   );
 }
