@@ -34,7 +34,14 @@ const createUsuario = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Nombre, email y carnet son requeridos' });
     }
 
-    // Verificar si el email o carnet ya existen
+    // Verificar si el nombre, email o carnet ya existen
+    const existingNombre = await Usuario.findOne({ 
+      where: { nombre } 
+    });
+    if (existingNombre) {
+      return res.status(400).json({ success: false, message: 'El nombre de usuario ya está registrado' });
+    }
+
     const existingUser = await Usuario.findOne({ 
       where: { email } 
     });
@@ -87,6 +94,12 @@ const updateUsuario = async (req, res) => {
     const usuario = await Usuario.findByPk(id);
     if (!usuario) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    }
+
+    // Verificar si el nombre ya existe en OTRO usuario
+    if (nombre && nombre !== usuario.nombre) {
+      const existingNombre = await Usuario.findOne({ where: { nombre } });
+      if (existingNombre) return res.status(400).json({ success: false, message: 'El nombre de usuario ya está en uso por otra persona' });
     }
 
     // Verificar si el email ya existe en OTRO usuario

@@ -248,9 +248,16 @@ function GestionMenuPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">Cargando productos...</td>
-                </tr>
+                Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse bg-gray-50/50">
+                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-1/2"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-1/4"></div></td>
+                    <td className="px-6 py-4"><div className="h-6 bg-gray-200 rounded-full w-20"></div></td>
+                    <td className="px-6 py-4"><div className="w-12 h-12 bg-gray-200 rounded-lg"></div></td>
+                    <td className="px-6 py-4"><div className="flex justify-end gap-2"><div className="w-8 h-8 bg-gray-200 rounded-lg"></div><div className="w-8 h-8 bg-gray-200 rounded-lg"></div></div></td>
+                  </tr>
+                ))
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-8 text-center text-gray-500">No se encontraron productos.</td>
@@ -266,7 +273,9 @@ function GestionMenuPage() {
                     </td>
                     <td className="px-6 py-4 font-semibold text-gray-700">Bs. {Number(p.precio || 0).toFixed(2)}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${p.disponible ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full ${p.disponible ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {p.disponible && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>}
+                        {!p.disponible && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>}
                         {p.disponible ? 'Activo' : 'No disponible'}
                       </span>
                     </td>
@@ -392,7 +401,7 @@ function GestionMenuPage() {
 
       {/* Toast Facherísimo */}
       {toast.visible && (
-        <div className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-300 animate-bounce ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+        <div className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 backdrop-blur-md transform transition-all duration-300 animate-bounce ${toast.type === 'success' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
           {toast.type === 'success' ? (
             <div className="bg-white/20 p-1.5 rounded-full">
               <Check size={20} className="text-white" />

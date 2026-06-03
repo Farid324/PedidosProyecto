@@ -1,8 +1,9 @@
 // src/pages/Admin/Usuarios/UsuariosPage.jsx
 import { useEffect, useState } from 'react';
-import { PlusCircle, Search, Users, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Search, Users, Edit, Trash2, Check, X } from 'lucide-react';
 import usuarioService from '../../../services/usuarioService';
 import UsuarioModal from '../../../components/usuarios/UsuarioModal';
+import Modal from '../../../components/common/Modal';
 
 function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
@@ -10,6 +11,38 @@ function UsuariosPage() {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [usuarioToEdit, setUsuarioToEdit] = useState(null);
+
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, isDeleting: false });
+
+  const playSuccessSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const playNote = (frequency, startTime, duration) => {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime + startTime);
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start(audioCtx.currentTime + startTime);
+        oscillator.stop(audioCtx.currentTime + startTime + duration);
+      };
+      playNote(523.25, 0, 0.15); // C5
+      playNote(659.25, 0.1, 0.3); // E5
+    } catch (e) {
+      console.error('Audio playback failed', e);
+    }
+  };
+
+  const showToast = (message, type = 'success') => {
+    if (type === 'success') playSuccessSound();
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 3000);
+  };
 
   const fetchUsuarios = async () => {
     setLoading(true);
@@ -45,32 +78,43 @@ function UsuariosPage() {
     try {
       if (id) {
         await usuarioService.updateUsuario(id, data);
+        showToast('Usuario actualizado correctamente', 'success');
       } else {
         await usuarioService.createUsuario(data);
+        showToast('Usuario creado correctamente', 'success');
       }
       setModalOpen(false);
       fetchUsuarios();
     } catch (error) {
       console.error(error);
-      alert(error?.response?.data?.message || 'Error al guardar el usuario');
+      showToast(error?.response?.data?.message || 'Error al guardar el usuario', 'error');
     }
   };
 
   const handleDeleteUsuario = async (id, nombre) => {
-    if (!confirm(`¿Estás seguro de que deseas eliminar al usuario ${nombre}? Si el usuario tiene ventas, solo será desactivado.`)) {
-      return;
-    }
-    
-    try {
-      const res = await usuarioService.deleteUsuario(id);
-      if (res.data && res.data.message) {
-        alert(res.data.message);
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Eliminar Usuario',
+      message: `¿Estás seguro de que deseas eliminar al usuario ${nombre}? Si el usuario tiene ventas, solo será desactivado.`,
+      isDeleting: false,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isDeleting: true }));
+        try {
+          const res = await usuarioService.deleteUsuario(id);
+          if (res.data && res.data.message) {
+            showToast(res.data.message, 'success');
+          } else {
+            showToast('Usuario eliminado/desactivado correctamente', 'success');
+          }
+          fetchUsuarios();
+          setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, isDeleting: false });
+        } catch (error) {
+          console.error('Error al desactivar usuario:', error);
+          showToast(error?.response?.data?.message || 'Error al desactivar el usuario', 'error');
+          setConfirmDialog(prev => ({ ...prev, isDeleting: false }));
+        }
       }
-      fetchUsuarios();
-    } catch (error) {
-      console.error('Error al desactivar usuario:', error);
-      alert(error?.response?.data?.message || 'Error al desactivar el usuario');
-    }
+    });
   };
 
   return (
@@ -131,9 +175,16 @@ function UsuariosPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">Cargando usuarios...</td>
-                </tr>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse bg-gray-50/50">
+                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-3/4"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-1/2"></div></td>
+                    <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-1/2"></div></td>
+                    <td className="px-6 py-4"><div className="h-5 bg-gray-200 rounded-full w-24"></div></td>
+                    <td className="px-6 py-4"><div className="h-5 bg-gray-200 rounded-full w-16"></div></td>
+                    <td className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-2"><div className="w-8 h-8 bg-gray-200 rounded"></div><div className="w-8 h-8 bg-gray-200 rounded"></div></div></td>
+                  </tr>
+                ))
               ) : filteredUsuarios.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-8 text-center text-gray-500">No se encontraron usuarios.</td>
@@ -153,7 +204,9 @@ function UsuariosPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${u.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full ${u.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {u.activo && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>}
+                        {!u.activo && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>}
                         {u.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
@@ -191,8 +244,60 @@ function UsuariosPage() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveUsuario}
+        onError={(msg) => showToast(msg, 'error')}
         usuarioToEdit={usuarioToEdit}
+        usuarios={usuarios}
       />
+
+      <Modal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => !confirmDialog.isDeleting && setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        title={confirmDialog.title}
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">{confirmDialog.message}</p>
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
+            <button
+              onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+              disabled={confirmDialog.isDeleting}
+              className="px-4 py-2 rounded-lg border text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDialog.onConfirm}
+              disabled={confirmDialog.isDeleting}
+              className="px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors flex items-center gap-2 font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+            >
+              {confirmDialog.isDeleting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Eliminando...
+                </>
+              ) : 'Sí, eliminar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {toast.visible && (
+        <div className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 backdrop-blur-md transform transition-all duration-300 animate-bounce ${toast.type === 'success' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+          {toast.type === 'success' ? (
+            <div className="bg-white/20 p-1.5 rounded-full">
+              <Check size={20} className="text-white" />
+            </div>
+          ) : (
+            <div className="bg-white/20 p-1.5 rounded-full">
+              <X size={20} className="text-white" />
+            </div>
+          )}
+          <p className="font-semibold text-sm">{toast.message}</p>
+        </div>
+      )}
     </div>
   );
 }

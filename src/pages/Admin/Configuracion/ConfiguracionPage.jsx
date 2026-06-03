@@ -1,6 +1,6 @@
 // src/pages/Admin/Configuracion/ConfiguracionPage.jsx
 import { useState, useEffect, useRef } from 'react'
-import { Upload, QrCode, Check, Trash2, Image as ImageIcon, User, Camera, Eye, EyeOff, Lock, X } from 'lucide-react'
+import { Upload, QrCode, Check, Trash2, Image as ImageIcon, User, Camera, Eye, EyeOff, Lock, X, Clock } from 'lucide-react'
 import configuracionService from '../../../services/configuracionService'
 
 import useAuthStore from '../../../store/authStore'
@@ -8,6 +8,51 @@ import usuarioService from '../../../services/usuarioService'
 
 function ConfiguracionPage() {
   const { user } = useAuthStore()
+
+  // Estados generales
+  const [loadingInit, setLoadingInit] = useState(true)
+
+  // Estados Turnos
+  const [turnos, setTurnos] = useState({
+    turno_manana_ingreso: '',
+    turno_manana_salida: '',
+    turno_tarde_ingreso: '',
+    turno_tarde_salida: ''
+  })
+  const [loadingTurnos, setLoadingTurnos] = useState(false)
+  const [savedTurnos, setSavedTurnos] = useState(false)
+
+  // Toast
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' })
+
+  const playSuccessSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const playNote = (frequency, startTime, duration) => {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime + startTime);
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime + startTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start(audioCtx.currentTime + startTime);
+        oscillator.stop(audioCtx.currentTime + startTime + duration);
+      };
+      playNote(523.25, 0, 0.15); // C5
+      playNote(659.25, 0.1, 0.3); // E5
+    } catch (e) {
+      console.error('Audio playback failed', e);
+    }
+  }
+
+  const showToast = (message, type = 'success') => {
+    if (type === 'success') playSuccessSound();
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 3000);
+  }
 
   // Estados QR
   const [qrImage, setQrImage] = useState(null)
@@ -31,18 +76,50 @@ function ConfiguracionPage() {
   const [pwdMessage, setPwdMessage] = useState(null)
 
   useEffect(() => {
-    fetchQR()
+    fetchData()
   }, [])
 
-  const fetchQR = async () => {
+  const fetchData = async () => {
     try {
-      const res = await configuracionService.getQR()
-      if (res.data && res.data.valor) {
-        setQrImage(res.data.valor)
-        setPreviewImage(res.data.valor)
+      const resQr = await configuracionService.getQR()
+      if (resQr.data && resQr.data.valor) {
+        setQrImage(resQr.data.valor)
+        setPreviewImage(resQr.data.valor)
+      }
+
+      if (user?.rol === 'admin') {
+        const keys = ['turno_manana_ingreso', 'turno_manana_salida', 'turno_tarde_ingreso', 'turno_tarde_salida']
+        const results = {}
+        for (const k of keys) {
+          const res = await configuracionService.getConfig(k)
+          results[k] = res.data ? res.data.valor : ''
+        }
+        setTurnos(results)
       }
     } catch (error) {
-      console.error('Error cargando QR:', error)
+      console.error('Error cargando data:', error)
+    } finally {
+      setTimeout(() => setLoadingInit(false), 500)
+    }
+  }
+
+  const handleSaveTurnos = async () => {
+    setLoadingTurnos(true)
+    try {
+      const keys = Object.keys(turnos)
+      for (const k of keys) {
+        if (turnos[k] !== undefined) {
+          await configuracionService.saveConfig(k, turnos[k])
+        }
+      }
+      setSavedTurnos(true)
+      showToast('Horarios de turno guardados exitosamente', 'success')
+      setTimeout(() => setSavedTurnos(false), 3000)
+    } catch (error) {
+      console.error(error)
+      showToast('Error al guardar los horarios de turno', 'error')
+    } finally {
+      setLoadingTurnos(false)
     }
   }
 
@@ -51,7 +128,7 @@ function ConfiguracionPage() {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona una imagen válida')
+      showToast('Por favor selecciona una imagen válida', 'error')
       return
     }
 
@@ -83,10 +160,11 @@ function ConfiguracionPage() {
       await configuracionService.saveQR(previewImage)
       setQrImage(previewImage)
       setSavedQr(true)
+      showToast('Código QR guardado exitosamente', 'success')
       setTimeout(() => setSavedQr(false), 3000)
     } catch (error) {
       console.error('Error guardando QR:', error)
-      alert('Error al guardar el QR')
+      showToast('Error al guardar el código QR', 'error')
     } finally {
       setLoadingQr(false)
     }
@@ -98,8 +176,10 @@ function ConfiguracionPage() {
       await configuracionService.saveQR('')
       setQrImage(null)
       setPreviewImage(null)
+      showToast('Código QR eliminado', 'success')
     } catch (error) {
       console.error('Error eliminando QR:', error)
+      showToast('Error al eliminar el código QR', 'error')
     }
   }
 
@@ -120,11 +200,11 @@ function ConfiguracionPage() {
 
   const handleSavePwd = async () => {
     if (!pwdData.currentPassword || !pwdData.newPassword || !pwdData.confirmPassword) {
-      setPwdMessage({ type: 'error', text: 'Todos los campos son requeridos' })
+      showToast('Todos los campos de contraseña son requeridos', 'error')
       return
     }
     if (pwdData.newPassword !== pwdData.confirmPassword) {
-      setPwdMessage({ type: 'error', text: 'Las contraseñas nuevas no coinciden' })
+      showToast('Las contraseñas nuevas no coinciden', 'error')
       return
     }
 
@@ -135,14 +215,26 @@ function ConfiguracionPage() {
         newPassword: pwdData.newPassword
       })
       if (res.success) {
-        setPwdMessage({ type: 'success', text: 'Contraseña actualizada exitosamente' })
+        showToast('Contraseña actualizada exitosamente', 'success')
         setPwdData({ currentPassword: '', newPassword: '', confirmPassword: '' })
       }
     } catch (error) {
-      setPwdMessage({ type: 'error', text: error.response?.data?.message || 'Error al cambiar contraseña' })
+      showToast(error.response?.data?.message || 'Error al cambiar contraseña', 'error')
     } finally {
       setLoadingPwd(false)
     }
+  }
+
+  if (loadingInit) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-24 bg-gray-200 rounded-xl"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-96 bg-gray-200 rounded-xl"></div>
+          <div className="h-96 bg-gray-200 rounded-xl"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -332,6 +424,108 @@ function ConfiguracionPage() {
         </div>
 
       </div>
+
+      {/* CONFIGURACIÓN DE TURNOS */}
+      {user?.rol === 'admin' && (
+        <div className="card bg-[var(--blanco-primario)] rounded-xl shadow-sm border border-gray-100 flex flex-col mt-6">
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-lg font-semibold text-[var(--guindo-primario)] flex items-center gap-2">
+              <Clock size={20} />
+              Horarios de Turno
+            </h2>
+            <p className="text-sm text-[var(--gris-primario)] mt-1">
+              Configura los horarios de ingreso y salida para los turnos de los cajeros
+            </p>
+          </div>
+          
+          <div className="p-6 flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* Turno Mañana */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-800 border-b pb-2">Turno Mañana</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Hora de Ingreso</label>
+                    <input 
+                      type="time" 
+                      value={turnos.turno_manana_ingreso}
+                      onChange={(e) => { setTurnos({...turnos, turno_manana_ingreso: e.target.value}); setSavedTurnos(false); }}
+                      className="w-full p-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-[var(--guindo-primario)] focus:ring-1 focus:ring-[var(--guindo-primario)] outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Hora de Salida</label>
+                    <input 
+                      type="time" 
+                      value={turnos.turno_manana_salida}
+                      onChange={(e) => { setTurnos({...turnos, turno_manana_salida: e.target.value}); setSavedTurnos(false); }}
+                      className="w-full p-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-[var(--guindo-primario)] focus:ring-1 focus:ring-[var(--guindo-primario)] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Turno Tarde */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-800 border-b pb-2">Turno Tarde</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Hora de Ingreso</label>
+                    <input 
+                      type="time" 
+                      value={turnos.turno_tarde_ingreso}
+                      onChange={(e) => { setTurnos({...turnos, turno_tarde_ingreso: e.target.value}); setSavedTurnos(false); }}
+                      className="w-full p-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-[var(--guindo-primario)] focus:ring-1 focus:ring-[var(--guindo-primario)] outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Hora de Salida</label>
+                    <input 
+                      type="time" 
+                      value={turnos.turno_tarde_salida}
+                      onChange={(e) => { setTurnos({...turnos, turno_tarde_salida: e.target.value}); setSavedTurnos(false); }}
+                      className="w-full p-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-[var(--guindo-primario)] focus:ring-1 focus:ring-[var(--guindo-primario)] outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-auto pt-4 flex justify-end">
+              <button
+                onClick={handleSaveTurnos}
+                disabled={loadingTurnos}
+                className="inline-flex items-center gap-2 px-6 py-2 bg-[var(--guindo-primario)] text-white rounded-lg hover:opacity-90 font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-sm"
+              >
+                {loadingTurnos ? (
+                  <>Guardando...</>
+                ) : savedTurnos ? (
+                  <><Check size={18} /> Guardado</>
+                ) : (
+                  <>Guardar Horarios</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 backdrop-blur-md transform transition-all duration-300 animate-bounce ${toast.type === 'success' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+          {toast.type === 'success' ? (
+            <div className="bg-white/20 p-1.5 rounded-full">
+              <Check size={20} className="text-white" />
+            </div>
+          ) : (
+            <div className="bg-white/20 p-1.5 rounded-full">
+              <X size={20} className="text-white" />
+            </div>
+          )}
+          <p className="font-semibold text-sm">{toast.message}</p>
+        </div>
+      )}
     </div>
   )
 }
