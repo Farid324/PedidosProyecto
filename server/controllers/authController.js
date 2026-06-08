@@ -1,5 +1,7 @@
 // server/controllers/authController.js
 const { Usuario, AccesoCajero } = require('../models');
+const { sequelize } = require('../config/database');
+const { Op } = require('sequelize');
 const jwt = require('jsonwebtoken');
 
 // Clave secreta para JWT (en producción usar variable de entorno)
@@ -75,8 +77,6 @@ const loginCajero = async (req, res) => {
         error: 'Usuario, contraseña y turno son requeridos' 
       });
     }
- 
-    const { Op } = require('sequelize');
     
     // Buscar el usuario cajero por nombre o correo
     const cajero = await Usuario.findOne({ 
@@ -179,6 +179,83 @@ const logoutCajero = async (req, res) => {
   }
 };
 
+// Cambiar Turno de Cajero dinámicamente
+const cambiarTurno = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { nuevoTurno } = req.body;
+    const { id, nombre, acceso_id, turno } = req.user;
+    const dispositivo = req.headers['user-agent'];
+
+    if (!nuevoTurno || !['AM', 'PM'].includes(nuevoTurno)) {
+      await t.rollback();
+      return res.status(400).json({ success: false, error: 'Turno inválido' });
+    }
+
+    if (turno === nuevoTurno) {
+      await t.rollback();
+      return res.status(400).json({ success: false, error: 'Ya estás en ese turno' });
+    }
+
+    // 1. Cerrar el acceso anterior
+    if (acceso_id) {
+      await AccesoCajero.update(
+        { fecha_salida: new Date() },
+        { where: { id: acceso_id }, transaction: t }
+      );
+    }
+
+    // 2. Crear nuevo acceso para el nuevo turno
+    const nuevoAcceso = await AccesoCajero.create({
+      nombre_cajero: nombre,
+      turno: nuevoTurno,
+      dispositivo,
+      fecha_ingreso: new Date()
+    }, { transaction: t });
+
+    // 3. Buscar información completa del cajero
+    const cajero = await Usuario.findByPk(id, { transaction: t });
+
+    await t.commit();
+
+    // 4. Generar nuevo token JWT
+    const token = jwt.sign(
+      { 
+        id: cajero.id,
+        nombre: cajero.nombre,
+        rol: 'cajero',
+        turno: nuevoTurno,
+        acceso_id: nuevoAcceso.id
+      },
+      JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+
+    res.json({
+      success: true,
+      user: {
+        id: cajero.id,
+        nombre: cajero.nombre,
+        email: cajero.email,
+        rol: cajero.rol,
+        carnet: cajero.carnet,
+        edad: (cajero.edad && cajero.anio_actualizacion_edad) ? cajero.edad + (new Date().getFullYear() - cajero.anio_actualizacion_edad) : cajero.edad,
+        telefono: cajero.telefono,
+        foto: cajero.foto,
+        activo: cajero.activo,
+        turno: nuevoTurno
+      },
+      token,
+      message: `Turno cambiado a ${nuevoTurno} exitosamente`
+    });
+
+  } catch (error) {
+    await t.rollback();
+    console.error('Error al cambiar de turno:', error);
+    res.status(500).json({ success: false, error: 'Error al procesar el cambio de turno' });
+  }
+};
+
 // Crear usuario admin inicial (seed)
 const createAdminUser = async (req, res) => {
   try {
@@ -267,6 +344,7 @@ module.exports = {
   loginAdmin,
   loginCajero,
   logoutCajero,
+  cambiarTurno,
   createAdminUser,
   getAccesosCajeros
 };

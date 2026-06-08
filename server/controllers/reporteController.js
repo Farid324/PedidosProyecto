@@ -370,14 +370,14 @@ const getDashboardAdministrador = async (req, res) => {
         },
         {
           model: Producto,
-          include: [{ model: Categoria }]
+          include: [{ model: Categoria, as: 'categoria' }]
         }
       ]
     });
     
     const catMap = {};
     for (let d of detalles) {
-      const catName = d.Producto?.Categoria?.nombre || 'Otros';
+      const catName = d.Producto?.categoria?.nombre || 'Otros';
       if (!catMap[catName]) catMap[catName] = 0;
       catMap[catName] += Number(d.subtotal || 0);
     }

@@ -34,14 +34,12 @@ function PedidosPage() {
   const [pedidoActivo, setPedidoActivo] = useState(null)
   const [pagoQR, setPagoQR] = useState(false)
   const [qrImage, setQrImage] = useState(null)
-  const [validationError, setValidationError] = useState(false)
-
   // Modales
   const [registrarModalOpen, setRegistrarModalOpen] = useState(false)
   const [cuentaModalOpen, setCuentaModalOpen] = useState(false)
   const [cuentaConfirmModalOpen, setCuentaConfirmModalOpen] = useState(false)
   const [finalizarModalOpen, setFinalizarModalOpen] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' })
 
   // Carga inicial
   useEffect(() => {
@@ -67,6 +65,11 @@ function PedidosPage() {
     fetchQR()
   }, [])
 
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type })
+    setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 4000)
+  }
+
   const fetchMesasOcupadas = async () => {
     try {
       const res = await pedidoService.getMesasOcupadas()
@@ -90,7 +93,6 @@ function PedidosPage() {
   // Al seleccionar mesa → cargar pedido activo si existe
   const handleSelectMesa = async (mesaId) => {
     setSelectedMesa(mesaId)
-    setValidationError(false)
     setPagoQR(false)
     
     try {
@@ -174,17 +176,16 @@ function PedidosPage() {
 
   // REGISTRAR
   const handleRegistrar = () => {
-    if (!clienteInfo.razonSocial.trim()) {
-      setValidationError(true)
-      return
-    }
-    setValidationError(false)
-    if (Object.keys(carrito).length === 0) {
-      alert('Agrega al menos un platillo a la orden')
-      return
-    }
     if (!selectedMesa) {
-      alert('Selecciona una mesa primero')
+      showToast('Selecciona una mesa primero', 'error')
+      return
+    }
+    if (Object.keys(carrito).length === 0) {
+      showToast('Agrega al menos un platillo a la orden', 'error')
+      return
+    }
+    if (!clienteInfo.razonSocial.trim()) {
+      showToast('Por favor ingrese la Razón Social del cliente', 'error')
       return
     }
     setRegistrarModalOpen(true)
@@ -194,6 +195,7 @@ function PedidosPage() {
     try {
       const items = Object.values(carrito).map(item => ({
         producto_id: item.id,
+        kind: 'comida',
         cantidad: item.cantidad,
       }))
 
@@ -222,17 +224,17 @@ function PedidosPage() {
       await fetchMesasOcupadas()
       // Recargar pedido activo
       await handleSelectMesa(selectedMesa)
-      alert(pedidoActivo ? '✅ Pedido actualizado' : '✅ Pedido registrado. Mesa ocupada.')
+      showToast(pedidoActivo ? 'Pedido actualizado correctamente' : 'Pedido registrado. Mesa ocupada.', 'success')
     } catch (error) {
       console.error("Error registrando pedido:", error)
-      alert(error?.response?.data?.error || 'Error al registrar el pedido')
+      showToast(error?.response?.data?.error || 'Error al registrar el pedido', 'error')
     }
   }
 
   // FINALIZAR
   const handleFinalizar = () => {
     if (!pedidoActivo) {
-      alert('No hay un pedido activo para finalizar')
+      showToast('No hay un pedido activo para finalizar', 'error')
       return
     }
     setFinalizarModalOpen(true)
@@ -254,18 +256,17 @@ function PedidosPage() {
       await fetchMesasOcupadas()
       
       // Mostrar toast
-      setToastMessage('Pedido finalizado. Mesa liberada')
-      setTimeout(() => setToastMessage(''), 4000)
+      showToast('Pedido finalizado. Mesa liberada', 'success')
     } catch (error) {
       console.error("Error finalizando pedido:", error)
-      alert('Error al finalizar el pedido')
+      showToast('Error al finalizar el pedido', 'error')
     }
   }
 
   // COMANDA (impresión para cocina)
   const handleComanda = () => {
     if (Object.keys(carrito).length === 0) {
-      alert('No hay platillos en la orden para generar comanda')
+      showToast('No hay platillos en la orden para generar comanda', 'error')
       return
     }
 
@@ -372,7 +373,7 @@ function PedidosPage() {
   // IMPRIMIR (recibo para cliente)
   const handleImprimir = () => {
     if (Object.keys(carrito).length === 0) {
-      alert('No hay platillos en la orden para imprimir')
+      showToast('No hay platillos en la orden para imprimir', 'error')
       return
     }
 
@@ -508,7 +509,7 @@ function PedidosPage() {
           selectedMesa={selectedMesa}
           carrito={carrito}
           clienteInfo={clienteInfo}
-          setClienteInfo={(info) => { setClienteInfo(info); setValidationError(false) }}
+          setClienteInfo={(info) => { setClienteInfo(info) }}
           tipoPedido={tipoPedido}
           setTipoPedido={setTipoPedido}
           observaciones={observaciones}
@@ -523,7 +524,7 @@ function PedidosPage() {
           onImprimir={handleImprimir}
           pagoQR={pagoQR}
           pedidoActivo={pedidoActivo}
-          validationError={validationError}
+          validationError={false}
         />
       </div>
 
@@ -559,13 +560,21 @@ function PedidosPage() {
       />
 
       {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-4 right-4 z-[120] animate-fade-in-down">
-          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg font-semibold flex items-center gap-2">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            {toastMessage}
+      {toast.visible && (
+        <div className="fixed top-4 right-4 z-[9999] animate-bounce">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 backdrop-blur-md text-white font-semibold ${
+            toast.type === 'success' ? 'bg-green-600/95' : 'bg-red-600/95'
+          }`}>
+            {toast.type === 'success' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            )}
+            <p className="text-sm font-semibold">{toast.message}</p>
           </div>
         </div>
       )}

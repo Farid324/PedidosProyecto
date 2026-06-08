@@ -87,11 +87,21 @@ const getMesasOcupadas = async (req, res) => {
   try {
     const pedidosActivos = await Pedido.findAll({
       where: { estado: { [Op.in]: ['pendiente', 'en_proceso'] } },
-      attributes: ['mesa'],
-      group: ['mesa']
+      attributes: ['mesa', 'created_at']
     });
 
-    const mesas = pedidosActivos.map(p => p.mesa);
+    const now = new Date();
+    const mesas = pedidosActivos.map(p => {
+      const createdAt = new Date(p.dataValues.created_at || p.created_at);
+      const diffMs = now - createdAt;
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      return {
+        id: p.mesa,
+        estado: diffMins >= 20 ? 'pendiente' : 'ocupada'
+      };
+    });
+
     res.json({ success: true, data: mesas });
   } catch (error) {
     console.error('Error obteniendo mesas ocupadas:', error);

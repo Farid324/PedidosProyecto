@@ -19,6 +19,14 @@ const authService = {
     return response.data;
   },
 
+  async cambiarTurno(nuevoTurno) {
+    const response = await api.post('/auth/cambiar-turno', { nuevoTurno });
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
+    return response.data;
+  },
+
   async logout() {
     try {
       await api.post('/auth/logout');

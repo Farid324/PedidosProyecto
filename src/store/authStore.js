@@ -60,6 +60,25 @@ const useAuthStore = create(
         }
       },
 
+      cambiarTurno: async (nuevoTurno) => {
+        try {
+          const response = await authService.cambiarTurno(nuevoTurno);
+          
+          if (response.success) {
+            set({
+              user: response.user,
+              turno: nuevoTurno,
+              sesionIniciada: new Date().toISOString()
+            });
+          }
+          
+          return response;
+        } catch (error) {
+          const errorMessage = error.response?.data?.error || 'Error al cambiar turno';
+          return { success: false, error: errorMessage };
+        }
+      },
+
       updateUser: (newUserData) => set((state) => ({
         user: { ...state.user, ...newUserData }
       })),

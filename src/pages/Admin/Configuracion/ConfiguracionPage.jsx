@@ -22,6 +22,14 @@ function ConfiguracionPage() {
   const [loadingTurnos, setLoadingTurnos] = useState(false)
   const [savedTurnos, setSavedTurnos] = useState(false)
 
+  // Estados Notificaciones
+  const [notificaciones, setNotificaciones] = useState({
+    notificar_fin_turno_cajero: 'false',
+    notificar_accesos_admin: 'false'
+  })
+  const [loadingNotificaciones, setLoadingNotificaciones] = useState(false)
+  const [savedNotificaciones, setSavedNotificaciones] = useState(false)
+
   // Toast
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' })
 
@@ -95,6 +103,14 @@ function ConfiguracionPage() {
           results[k] = res.data ? res.data.valor : ''
         }
         setTurnos(results)
+
+        const notifKeys = ['notificar_fin_turno_cajero', 'notificar_accesos_admin']
+        const notifResults = {}
+        for (const k of notifKeys) {
+          const res = await configuracionService.getConfig(k)
+          notifResults[k] = res.data ? res.data.valor : 'false'
+        }
+        setNotificaciones(notifResults)
       }
     } catch (error) {
       console.error('Error cargando data:', error)
@@ -120,6 +136,26 @@ function ConfiguracionPage() {
       showToast('Error al guardar los horarios de turno', 'error')
     } finally {
       setLoadingTurnos(false)
+    }
+  }
+
+  const handleSaveNotificaciones = async () => {
+    setLoadingNotificaciones(true)
+    try {
+      const keys = Object.keys(notificaciones)
+      for (const k of keys) {
+        if (notificaciones[k] !== undefined) {
+          await configuracionService.saveConfig(k, notificaciones[k])
+        }
+      }
+      setSavedNotificaciones(true)
+      showToast('Configuración de notificaciones guardada exitosamente', 'success')
+      setTimeout(() => setSavedNotificaciones(false), 3000)
+    } catch (error) {
+      console.error(error)
+      showToast('Error al guardar configuración de notificaciones', 'error')
+    } finally {
+      setLoadingNotificaciones(false)
     }
   }
 
@@ -427,7 +463,8 @@ function ConfiguracionPage() {
 
       {/* CONFIGURACIÓN DE TURNOS */}
       {user?.rol === 'admin' && (
-        <div className="card bg-[var(--blanco-primario)] rounded-xl shadow-sm border border-gray-100 flex flex-col mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div className="card bg-[var(--blanco-primario)] rounded-xl shadow-sm border border-gray-100 flex flex-col">
           <div className="p-6 border-b border-gray-100">
             <h2 className="text-lg font-semibold text-[var(--guindo-primario)] flex items-center gap-2">
               <Clock size={20} />
@@ -508,6 +545,80 @@ function ConfiguracionPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* NOTIFICACIONES */}
+        <div className="card bg-[var(--blanco-primario)] rounded-xl shadow-sm border border-gray-100 flex flex-col">
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-lg font-semibold text-[var(--guindo-primario)] flex items-center gap-2">
+              <Clock size={20} />
+              Notificaciones
+            </h2>
+            <p className="text-sm text-[var(--gris-primario)] mt-1">
+              Configura qué notificaciones mostrar en el sistema
+            </p>
+          </div>
+          
+          <div className="p-6 flex flex-col gap-6">
+            <div className="space-y-6">
+              
+              <div className="flex items-center justify-between border-b pb-4">
+                <div>
+                  <h3 className="font-medium text-gray-800">Cajeros: Aviso de fin de turno</h3>
+                  <p className="text-xs text-gray-500 mt-1">Notificar a los cajeros 15 minutos antes de que acabe su turno.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={notificaciones.notificar_fin_turno_cajero === 'true'}
+                    onChange={(e) => {
+                      setNotificaciones({ ...notificaciones, notificar_fin_turno_cajero: e.target.checked ? 'true' : 'false' });
+                      setSavedNotificaciones(false);
+                    }}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--guindo-primario)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--guindo-primario)]"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between border-b pb-4">
+                <div>
+                  <h3 className="font-medium text-gray-800">Admin: Accesos de usuarios</h3>
+                  <p className="text-xs text-gray-500 mt-1">Notificarme cuando un usuario ingresa o cierra su turno.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={notificaciones.notificar_accesos_admin === 'true'}
+                    onChange={(e) => {
+                      setNotificaciones({ ...notificaciones, notificar_accesos_admin: e.target.checked ? 'true' : 'false' });
+                      setSavedNotificaciones(false);
+                    }}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--guindo-primario)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--guindo-primario)]"></div>
+                </label>
+              </div>
+
+            </div>
+
+            <div className="mt-auto pt-4 flex justify-end">
+              <button
+                onClick={handleSaveNotificaciones}
+                disabled={loadingNotificaciones}
+                className="inline-flex items-center gap-2 px-6 py-2 bg-[var(--guindo-primario)] text-white rounded-lg hover:opacity-90 font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-sm"
+              >
+                {loadingNotificaciones ? (
+                  <>Guardando...</>
+                ) : savedNotificaciones ? (
+                  <><Check size={18} /> Guardado</>
+                ) : (
+                  <>Guardar Notificaciones</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
         </div>
       )}
 

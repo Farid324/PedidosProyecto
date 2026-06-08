@@ -45,7 +45,15 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
 
   const getMesaState = (mesaId) => {
     if (selectedMesa === mesaId) return 'selected'
-    if (mesasOcupadas.includes(mesaId)) return 'occupied'
+    
+    const mesaObj = mesasOcupadas.find(m => 
+      (typeof m === 'object' ? m.id === mesaId : m === mesaId)
+    )
+
+    if (mesaObj) {
+      if (typeof mesaObj === 'object' && mesaObj.estado === 'pendiente') return 'pending'
+      return 'occupied'
+    }
     return 'free'
   }
 
@@ -58,6 +66,8 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
         return `${base} bg-[var(--guindo-primario)] border-[var(--guindo-primario)] text-white shadow-md scale-105`
       case 'occupied':
         return `${base} bg-orange-50 border-orange-400 text-orange-600 hover:border-orange-500 shadow-sm`
+      case 'pending':
+        return `${base} bg-red-50 border-red-500 text-red-600 hover:border-red-600 shadow-sm animate-pulse`
       default:
         return `${base} bg-white border-gray-200 text-gray-500 hover:border-[var(--guindo-primario)] hover:text-[var(--guindo-primario)]`
     }
@@ -75,6 +85,10 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-orange-400"></span>
             <span className="text-xs text-gray-500">Ocupada</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+            <span className="text-xs text-gray-500">Pendiente &gt;20m</span>
           </div>
           {selectedMesa && (
             <span className="text-sm font-medium px-3 py-1 bg-green-100 text-green-700 rounded-full border border-green-200">
@@ -109,8 +123,11 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
             >
               <span className="text-xs uppercase font-bold tracking-wider">Mesa</span>
               <span className="text-lg font-bold">{mesa.id}</span>
-              {mesasOcupadas.includes(mesa.id) && selectedMesa !== mesa.id && (
+              {getMesaState(mesa.id) === 'occupied' && (
                 <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Ocupada</span>
+              )}
+              {getMesaState(mesa.id) === 'pending' && (
+                <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5 text-red-600">Pendiente</span>
               )}
             </div>
           ))}
