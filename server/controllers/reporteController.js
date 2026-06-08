@@ -1,5 +1,5 @@
 // server/controllers/reporteController.js
-const { Pedido, Factura, AccesoCajero } = require('../models');
+const { Pedido, Factura, AccesoCajero, DetallePedido, Producto, Categoria } = require('../models');
 const { Op, fn, col, literal } = require('sequelize');
 
 function startOfDay(d = new Date()) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
@@ -11,35 +11,80 @@ function endOfDay(d = new Date()) { const x = new Date(d); x.setHours(23,59,59,9
 const getMiReporteDiario = async (req, res) => {
   try {
     const { nombre } = req.user;
-    const start = startOfDay();
-    const end = endOfDay();
+    const targetDate = req.query.date ? new Date(req.query.date + 'T00:00:00') : new Date();
+    const start = startOfDay(targetDate);
+    const end = endOfDay(targetDate);
 
-    const ventas = await Factura.findAll({
-      where: { cajero_nombre: nombre, estado: 'pagada', fecha_emision: { [Op.between]: [start, end] } },
-      order: [['fecha_emision','ASC']]
+    const facturas = await Factura.findAll({
+      where: { 
+        cajero_nombre: nombre, 
+        estado: 'pagada', 
+        fecha_emision: { [Op.between]: [start, end] } 
+      },
+      include: [
+        {
+          model: Pedido,
+          attributes: ['turno', 'id']
+        }
+      ],
+      order: [['fecha_emision','DESC']]
     });
-    const total = ventas.reduce((s,v)=>s+Number(v.total||0),0);
-    const pedidos = await Pedido.findAll({
-      where: { cajero_nombre: nombre, fecha_pedido: { [Op.between]: [start, end] } },
-      order: [['fecha_pedido','ASC']]
+
+    let total = 0;
+    let total_qr = 0;
+    let total_efectivo = 0;
+    const pedidosSet = new Set();
+    let turno_trabajado = 'N/D';
+
+    const ventas = facturas.map(f => {
+      const monto = Number(f.total || 0);
+      total += monto;
+      if (f.metodo_pago === 'QR') total_qr += monto;
+      if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      if (f.pedido_id) pedidosSet.add(f.pedido_id);
+
+      const turno = f.Pedido ? f.Pedido.turno : 'N/D';
+      if (turno !== 'N/D') turno_trabajado = turno;
+
+      return {
+        id: f.id,
+        numero_pedido: f.Pedido ? f.Pedido.id : f.pedido_id,
+        fecha_emision: f.fecha_emision,
+        razon_social: f.cliente_nombre,
+        nit: f.cliente_nit,
+        monto_total: monto,
+        metodo_pago: f.metodo_pago,
+        cajero_nombre: f.cajero_nombre,
+        turno: turno
+      };
     });
+
+    if (turno_trabajado === 'N/D') {
+      const acceso = await AccesoCajero.findOne({
+        where: { nombre_cajero: nombre, fecha_ingreso: { [Op.between]: [start, end] } }
+      });
+      if (acceso) {
+        turno_trabajado = acceso.turno;
+      }
+    }
 
     return res.json({
       success: true,
       data: {
         cajero: nombre,
         fecha: start.toISOString().split('T')[0],
+        turno: turno_trabajado,
         resumen: {
-          total_ventas: Number(total.toFixed(2)),
-          cantidad_ventas: ventas.length,
-          cantidad_pedidos: pedidos.length,
-          promedio_venta: ventas.length ? Number((total/ventas.length).toFixed(2)) : 0,
+          total: Number(total.toFixed(2)),
+          total_qr: Number(total_qr.toFixed(2)),
+          total_efectivo: Number(total_efectivo.toFixed(2)),
+          total_pedidos: pedidosSet.size
         },
-        ventas, pedidos
+        ventas
       }
     });
   } catch (e) {
-    console.error(e);
+    console.error('Error en getMiReporteDiario:', e);
     return res.status(500).json({ success:false, message:'Error obteniendo mi reporte diario' });
   }
 };
@@ -201,9 +246,219 @@ const getReporteCajeros = async (req, res) => {
   }
 };
 
+const getReportesAdministrador = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    let start, end;
+    if (startDate && endDate) {
+      start = startOfDay(new Date(startDate + 'T00:00:00'));
+      end = endOfDay(new Date(endDate + 'T00:00:00'));
+    } else {
+      const now = new Date();
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = endOfDay(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    }
+
+    const facturas = await Factura.findAll({
+      where: {
+        estado: 'pagada',
+        fecha_emision: { [Op.between]: [start, end] }
+      },
+      include: [
+        {
+          model: Pedido,
+          attributes: ['turno', 'id']
+        }
+      ],
+      order: [['fecha_emision', 'DESC']]
+    });
+
+    let total = 0;
+    let total_qr = 0;
+    let total_efectivo = 0;
+    const pedidosSet = new Set();
+
+    const ventas = facturas.map(f => {
+      const monto = Number(f.total || 0);
+      total += monto;
+      if (f.metodo_pago === 'QR') total_qr += monto;
+      if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      if (f.pedido_id) pedidosSet.add(f.pedido_id);
+
+      return {
+        id: f.id,
+        numero_pedido: f.Pedido ? f.Pedido.id : f.pedido_id,
+        fecha_emision: f.fecha_emision,
+        razon_social: f.cliente_nombre,
+        nit: f.cliente_nit,
+        monto_total: monto,
+        metodo_pago: f.metodo_pago,
+        cajero_nombre: f.cajero_nombre,
+        turno: f.Pedido ? f.Pedido.turno : 'N/D'
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        resumen: {
+          total: Number(total.toFixed(2)),
+          total_qr: Number(total_qr.toFixed(2)),
+          total_efectivo: Number(total_efectivo.toFixed(2)),
+          total_pedidos: pedidosSet.size
+        },
+        ventas
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en getReportesAdministrador:', error);
+    return res.status(500).json({ success: false, message: 'Error al obtener reportes del administrador' });
+  }
+};
+
+const getDashboardAdministrador = async (req, res) => {
+  try {
+    const targetDate = req.query.date ? new Date(req.query.date + 'T00:00:00') : new Date();
+    const start = startOfDay(targetDate);
+    const end = endOfDay(targetDate);
+
+    // Ventas del día
+    const facturas = await Factura.findAll({
+      where: { estado: 'pagada', fecha_emision: { [Op.between]: [start, end] } }
+    });
+    const ventas_del_dia = facturas.reduce((sum, f) => sum + Number(f.total || 0), 0);
+
+    // Pedidos Completados
+    const pedidos = await Pedido.findAll({
+      where: { estado: 'completado', fecha_pedido: { [Op.between]: [start, end] } }
+    });
+    const pedidos_completados = pedidos.length;
+
+    // Clientes Atendidos (podemos usar el número de pedidos en general como aproximación)
+    const clientes_atendidos = await Pedido.count({
+      where: { fecha_pedido: { [Op.between]: [start, end] } }
+    });
+
+    // Pedidos Recientes
+    const recientes = await Pedido.findAll({
+      where: { fecha_pedido: { [Op.between]: [start, end] } },
+      order: [['fecha_pedido', 'DESC']],
+      limit: 10
+    });
+
+    const pedidos_recientes = recientes.map(p => {
+      // Create local time string safely
+      const hora = new Date(p.fecha_pedido).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+      return {
+        id: p.id,
+        cliente: p.tipo_pedido === 'mesa' ? `Mesa ${p.mesa}` : p.razon_social,
+        total: `Bs ${Number(p.total || 0).toFixed(2)}`,
+        estado: p.estado,
+        hora: hora !== 'Invalid Date' ? hora : ''
+      };
+    });
+
+    // Ventas por categoría
+    const detalles = await DetallePedido.findAll({
+      include: [
+        {
+          model: Pedido,
+          required: true,
+          where: { estado: 'completado', fecha_pedido: { [Op.between]: [start, end] } }
+        },
+        {
+          model: Producto,
+          include: [{ model: Categoria }]
+        }
+      ]
+    });
+    
+    const catMap = {};
+    for (let d of detalles) {
+      const catName = d.Producto?.Categoria?.nombre || 'Otros';
+      if (!catMap[catName]) catMap[catName] = 0;
+      catMap[catName] += Number(d.subtotal || 0);
+    }
+    const ventas_por_categoria = Object.keys(catMap).map(k => ({
+      name: k,
+      value: Number(catMap[k].toFixed(2))
+    }));
+
+    // Cajeros y Turnos
+    const accesos = await AccesoCajero.findAll({
+      where: { fecha_ingreso: { [Op.between]: [start, end] } },
+      order: [['fecha_ingreso', 'ASC']]
+    });
+
+    const turnosRows = await Factura.findAll({
+      attributes: [
+        'cajero_nombre',
+        [fn('sum', col('total')), 'monto'],
+        [fn('count', col('id')), 'cantidad']
+      ],
+      where: { estado: 'pagada', fecha_emision: { [Op.between]: [start, end] } },
+      group: ['cajero_nombre'],
+      raw: true
+    });
+
+    const salesMap = {};
+    turnosRows.forEach(r => {
+      salesMap[r.cajero_nombre] = {
+        monto: Number(r.monto || 0),
+        cantidad: Number(r.cantidad || 0)
+      };
+    });
+
+    const cajerosUnicos = new Map();
+    accesos.forEach(a => {
+      cajerosUnicos.set(a.nombre_cajero, {
+        nombre: a.nombre_cajero,
+        turno: a.turno,
+        ventas: `Bs ${salesMap[a.nombre_cajero]?.monto.toFixed(2) || '0.00'}`,
+        pedidos: salesMap[a.nombre_cajero]?.cantidad || 0,
+        estado: a.fecha_salida ? 'inactivo' : 'activo'
+      });
+    });
+
+    turnosRows.forEach(r => {
+      if (!cajerosUnicos.has(r.cajero_nombre)) {
+        cajerosUnicos.set(r.cajero_nombre, {
+          nombre: r.cajero_nombre || 'N/D',
+          turno: 'N/D',
+          ventas: `Bs ${Number(r.monto || 0).toFixed(2)}`,
+          pedidos: r.cantidad || 0,
+          estado: 'activo'
+        });
+      }
+    });
+
+    const cajeros_turnos = Array.from(cajerosUnicos.values());
+
+    return res.json({
+      success: true,
+      data: {
+        ventas_del_dia: `Bs ${ventas_del_dia.toFixed(2)}`,
+        pedidos_completados,
+        clientes_atendidos,
+        pedidos_recientes,
+        ventas_por_categoria,
+        cajeros_turnos
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en getDashboardAdministrador:', error);
+    return res.status(500).json({ success: false, message: 'Error al obtener dashboard del administrador' });
+  }
+};
+
 module.exports = {
   getMiReporteDiario,
   getReporteDiario,
   getReporteMensual,
   getReporteCajeros,
+  getReportesAdministrador,
+  getDashboardAdministrador,
 };

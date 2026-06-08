@@ -11,6 +11,7 @@ import OrderSummary from '../../../components/pedidos/OrderSummary'
 import RegistrarModal from '../../../components/pedidos/RegistrarModal'
 import CuentaModal from '../../../components/pedidos/CuentaModal'
 import CuentaConfirmModal from '../../../components/pedidos/CuentaConfirmModal'
+import FinalizarModal from '../../../components/pedidos/FinalizarModal'
 
 function PedidosPage() {
   const { role } = useAuthStore()
@@ -39,6 +40,8 @@ function PedidosPage() {
   const [registrarModalOpen, setRegistrarModalOpen] = useState(false)
   const [cuentaModalOpen, setCuentaModalOpen] = useState(false)
   const [cuentaConfirmModalOpen, setCuentaConfirmModalOpen] = useState(false)
+  const [finalizarModalOpen, setFinalizarModalOpen] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
 
   // Carga inicial
   useEffect(() => {
@@ -227,13 +230,16 @@ function PedidosPage() {
   }
 
   // FINALIZAR
-  const handleFinalizar = async () => {
+  const handleFinalizar = () => {
     if (!pedidoActivo) {
       alert('No hay un pedido activo para finalizar')
       return
     }
-    if (!confirm('¿Finalizar este pedido y liberar la mesa?')) return
+    setFinalizarModalOpen(true)
+  }
 
+  const handleConfirmFinalizar = async () => {
+    setFinalizarModalOpen(false)
     try {
       const metodo = pagoQR ? 'QR' : 'EFECTIVO'
       await pedidoService.finalizarPedido(pedidoActivo.id, metodo)
@@ -246,7 +252,10 @@ function PedidosPage() {
       setPagoQR(false)
       setSelectedMesa(null)
       await fetchMesasOcupadas()
-      alert('✅ Pedido finalizado. Mesa liberada.')
+      
+      // Mostrar toast
+      setToastMessage('Pedido finalizado. Mesa liberada')
+      setTimeout(() => setToastMessage(''), 4000)
     } catch (error) {
       console.error("Error finalizando pedido:", error)
       alert('Error al finalizar el pedido')
@@ -542,6 +551,24 @@ function PedidosPage() {
         onConfirmSi={handleCuentaConfirmSi}
         onConfirmNo={handleCuentaConfirmNo}
       />
+
+      <FinalizarModal
+        isOpen={finalizarModalOpen}
+        onClose={() => setFinalizarModalOpen(false)}
+        onConfirm={handleConfirmFinalizar}
+      />
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-[120] animate-fade-in-down">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg font-semibold flex items-center gap-2">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {toastMessage}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

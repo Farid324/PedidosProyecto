@@ -38,17 +38,10 @@ function CajeroLayout() {
     },
     { 
       id: 'facturacion', 
-      label: 'Facturación', 
+      label: 'Gestión de pedidos', 
       icon: Receipt, 
       path: '/cajero/facturacion',
       badge: null 
-    },
-    { 
-      id: 'cobros', 
-      label: 'Cobros Pendientes', 
-      icon: DollarSign, 
-      path: '/cajero/cobros',
-      badge: '5' 
     },
     { 
       id: 'reportes', 

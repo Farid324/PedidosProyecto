@@ -1,5 +1,5 @@
 // server/controllers/pedidoController.js
-const { Pedido, DetallePedido, Producto } = require('../models');
+const { Pedido, DetallePedido, Producto, Factura } = require('../models');
 const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
 
@@ -228,23 +228,48 @@ const updatePedidoItems = async (req, res) => {
 
 // Finalizar pedido (liberar mesa)
 const finalizarPedido = async (req, res) => {
+  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
     const { metodo_pago } = req.body;
 
-    const pedido = await Pedido.findByPk(id);
+    const pedido = await Pedido.findByPk(id, { transaction: t });
 
     if (!pedido) {
+      await t.rollback();
       return res.status(404).json({ success: false, error: 'Pedido no encontrado' });
     }
 
     await pedido.update({
       estado: 'completado',
       metodo_pago: metodo_pago || pedido.metodo_pago,
-    });
+    }, { transaction: t });
 
-    res.json({ success: true, data: pedido, message: 'Pedido finalizado, mesa liberada' });
+    // Generar Factura automáticamente al finalizar el pedido
+    const fecha = new Date();
+    const count = await Factura.count({ transaction: t });
+    const numero_factura = `FAC-${fecha.getFullYear()}${(fecha.getMonth() + 1).toString().padStart(2, '0')}-${(count + 1).toString().padStart(5, '0')}`;
+
+    const subtotal = pedido.subtotal || 0;
+    const total = pedido.total || 0;
+
+    await Factura.create({
+      numero_factura,
+      pedido_id: pedido.id,
+      cliente_nombre: pedido.razon_social || 'S/N',
+      cliente_nit: pedido.nit || '0',
+      cajero_nombre: pedido.cajero_nombre || 'cajero',
+      subtotal,
+      descuento: 0,
+      total,
+      metodo_pago: metodo_pago || pedido.metodo_pago,
+      estado: 'pagada'
+    }, { transaction: t });
+
+    await t.commit();
+    res.json({ success: true, data: pedido, message: 'Pedido finalizado y facturado correctamente' });
   } catch (error) {
+    await t.rollback();
     console.error('Error finalizando pedido:', error);
     res.status(500).json({ success: false, error: 'Error finalizando pedido' });
   }

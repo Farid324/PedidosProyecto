@@ -1,77 +1,103 @@
-// src/pages/Admin/Dashboard/AdminDashboard.jsx
-import { useState } from 'react'
-import { 
-  ShoppingCart, FileText, Users, 
-  DollarSign, Calendar, BarChart3, PieChart,
-  Clock, AlertCircle
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import {
+  ShoppingCart, FileText, Users,
+  DollarSign, PieChart, Clock, AlertCircle
 } from 'lucide-react'
 import useAuthStore from '../../../store/authStore'
+import api from '../../../services/api'
 
 function AdminDashboard() {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
+
+  const [data, setData] = useState({
+    ventas_del_dia: 'Bs 0.00',
+    pedidos_completados: 0,
+    clientes_atendidos: 0,
+    pedidos_recientes: [],
+    ventas_por_categoria: [],
+    cajeros_turnos: []
+  })
+  const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchDashboardData()
+    const interval = setInterval(() => {
+      fetchDashboardDataSilent()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [targetDate])
+
+  const fetchDashboardData = async () => {
+    setLoading(true)
+    try {
+      const res = await api.get(`/reportes/admin-dashboard?date=${targetDate}`)
+      if (res.data.success) {
+        setData(res.data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchDashboardDataSilent = async () => {
+    try {
+      const res = await api.get(`/reportes/admin-dashboard?date=${targetDate}`)
+      if (res.data.success) {
+        setData(res.data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    }
+  }
 
   const statsCards = [
-    { 
-      title: 'Ventas del Día', 
-      value: 'Bs 4,850', 
-      change: '+12%', 
-      icon: DollarSign, 
+    {
+      title: 'Ventas del Día',
+      value: data.ventas_del_dia,
+      icon: DollarSign,
       color: 'green',
-      subtitle: 'vs. ayer'
+      subtitle: 'fecha seleccionada'
     },
-    { 
-      title: 'Pedidos Completados', 
-      value: '67', 
-      change: '+8', 
-      icon: ShoppingCart, 
+    {
+      title: 'Pedidos Completados',
+      value: data.pedidos_completados,
+      icon: ShoppingCart,
       color: 'blue',
-      subtitle: 'pedidos hoy'
+      subtitle: 'fecha seleccionada'
     },
-    { 
-      title: 'Promedio por Pedido', 
-      value: 'Bs 72.38', 
-      change: '+5%', 
-      icon: BarChart3, 
-      color: 'purple',
-      subtitle: 'incremento'
-    },
-    { 
-      title: 'Clientes Atendidos', 
-      value: '234', 
-      change: '+23', 
-      icon: Users, 
+    {
+      title: 'Clientes Atendidos',
+      value: data.clientes_atendidos,
+      icon: Users,
       color: 'yellow',
-      subtitle: 'nuevos hoy'
+      subtitle: 'fecha seleccionada'
     },
-  ]
-
-  const recentOrders = [
-    { id: '001', cliente: 'Mesa 5', total: 'Bs 125', estado: 'completado', hora: '14:30' },
-    { id: '002', cliente: 'Delivery - Juan P.', total: 'Bs 89', estado: 'en_proceso', hora: '14:25' },
-    { id: '003', cliente: 'Mesa 2', total: 'Bs 156', estado: 'pendiente', hora: '14:20' },
-    { id: '004', cliente: 'Mesa 8', total: 'Bs 78', estado: 'completado', hora: '14:15' },
-  ]
-
-  const cajerosTurnos = [
-    { nombre: 'Carlos Mendoza', turno: 'AM', ventas: 'Bs 1,250', pedidos: 15, estado: 'activo' },
-    { nombre: 'Ana García', turno: 'PM', ventas: 'Bs 0', pedidos: 0, estado: 'pendiente' },
-    { nombre: 'Luis Fernández', turno: 'AM', ventas: 'Bs 980', pedidos: 12, estado: 'cerrado' },
   ]
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[var(--gris-primario)]">Dashboard Administrativo</h1>
           <p className="text-[var(--gris-primario)] mt-1">Bienvenido, {user?.name}</p>
         </div>
-        <div className="flex gap-3">
-          <button className="btn btn-secondary flex items-center gap-2">
-            <Calendar size={20} />
-            Hoy
-          </button>
-          <button className="btn btn-primary flex items-center gap-2">
+        <div className="flex gap-3 items-center">
+          <input
+            type="date"
+            className="input bg-white border-gray-200 py-2"
+            value={targetDate}
+            onChange={(e) => setTargetDate(e.target.value)}
+          />
+          <button
+            onClick={() => navigate('/admin/reportes')}
+            className="btn btn-primary flex items-center gap-2"
+          >
             <FileText size={20} />
             Generar Reporte
           </button>
@@ -79,7 +105,7 @@ function AdminDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {statsCards.map((stat, index) => {
           const Icon = stat.icon
           return (
@@ -88,11 +114,10 @@ function AdminDashboard() {
                 <div className={`bg-${stat.color}-100 p-3 rounded-lg`}>
                   <Icon className={`text-${stat.color}-600`} size={24} />
                 </div>
-                <span className={`text-sm font-semibold text-${stat.color}-600`}>
-                  {stat.change}
-                </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-800">{stat.value}</h3>
+              <h3 className="text-2xl font-bold text-gray-800">
+                {loading ? '...' : stat.value}
+              </h3>
               <p className="text-gray-600 text-sm mt-1">{stat.title}</p>
               <p className="text-gray-500 text-xs mt-2">{stat.subtitle}</p>
             </div>
@@ -101,19 +126,46 @@ function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart Placeholder */}
+        {/* Ventas por Categoría */}
         <div className="card lg:col-span-2">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <PieChart size={20} />
             Ventas por Categoría
           </h3>
-          <div className="h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center">
-            <div className="text-center">
-              <PieChart size={48} className="text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500">Gráfico de ventas por categoría</p>
-              <p className="text-xs text-gray-400 mt-1">Bebidas • Platos • Postres</p>
+          {loading ? (
+            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500">Cargando datos...</p>
             </div>
-          </div>
+          ) : data.ventas_por_categoria && data.ventas_por_categoria.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data.ventas_por_categoria.map((cat, index) => {
+                const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500'];
+                const colorClass = colors[index % colors.length];
+                // Calculate max value for progress bar width
+                const maxVal = Math.max(...data.ventas_por_categoria.map(c => c.value));
+                const widthPercent = (cat.value / maxVal) * 100;
+
+                return (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg flex flex-col justify-center">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold text-gray-700">{cat.name}</span>
+                      <span className="font-bold text-gray-900">Bs {cat.value.toFixed(2)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div className={`h-2.5 rounded-full ${colorClass}`} style={{ width: `${widthPercent}%` }}></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <PieChart size={48} className="text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-500">No hay ventas registradas</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Recent Orders */}
@@ -123,25 +175,30 @@ function AdminDashboard() {
             Pedidos Recientes
           </h3>
           <div className="space-y-3">
-            {recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800 text-sm">#{order.id}</p>
-                  <p className="text-gray-600 text-xs">{order.cliente}</p>
+            {loading ? (
+              <p className="text-gray-500 text-sm text-center py-4">Cargando...</p>
+            ) : data.pedidos_recientes.length === 0 ? (
+              <p className="text-gray-500 text-sm text-center py-4">No hay pedidos recientes.</p>
+            ) : (
+              data.pedidos_recientes.map((order) => (
+                <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 text-sm">#{order.id}</p>
+                    <p className="text-gray-600 text-xs">{order.cliente}</p>
+                  </div>
+                  <div className="text-right mx-3">
+                    <p className="font-semibold text-gray-800 text-sm">{order.total}</p>
+                    <p className="text-xs text-gray-500">{order.hora}</p>
+                  </div>
+                  <span className={`badge ${order.estado === 'completado' ? 'badge-success' :
+                      order.estado === 'en_proceso' ? 'badge-warning' :
+                        'badge-danger'
+                    }`}>
+                    {order.estado.replace('_', ' ')}
+                  </span>
                 </div>
-                <div className="text-right mx-3">
-                  <p className="font-semibold text-gray-800 text-sm">{order.total}</p>
-                  <p className="text-xs text-gray-500">{order.hora}</p>
-                </div>
-                <span className={`badge ${
-                  order.estado === 'completado' ? 'badge-success' :
-                  order.estado === 'en_proceso' ? 'badge-warning' :
-                  'badge-danger'
-                }`}>
-                  {order.estado.replace('_', ' ')}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -164,52 +221,49 @@ function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {cajerosTurnos.map((cajero, index) => (
-                <tr key={index} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-semibold">
-                        {cajero.nombre.charAt(0)}
-                      </div>
-                      <span className="text-sm font-medium text-gray-800">{cajero.nombre}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center gap-1 text-sm`}>
-                      {cajero.turno === 'AM' ? '☀️' : '🌙'} {cajero.turno}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-sm font-semibold text-gray-800">{cajero.ventas}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="text-sm text-gray-600">{cajero.pedidos} pedidos</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`badge ${
-                      cajero.estado === 'activo' ? 'badge-success' :
-                      cajero.estado === 'pendiente' ? 'badge-warning' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {cajero.estado}
-                    </span>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-4 text-gray-500 text-sm">Cargando cajeros...</td>
                 </tr>
-              ))}
+              ) : data.cajeros_turnos.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-4 text-gray-500 text-sm">No hay ventas registradas.</td>
+                </tr>
+              ) : (
+                data.cajeros_turnos.map((cajero, index) => (
+                  <tr key={index} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-semibold">
+                          {cajero.nombre.charAt(0)}
+                        </div>
+                        <span className="text-sm font-medium text-gray-800">{cajero.nombre}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center gap-1 text-sm`}>
+                        {cajero.turno === 'AM' ? '☀️' : (cajero.turno === 'PM' ? '🌙' : '')} {cajero.turno}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="text-sm font-semibold text-gray-800">{cajero.ventas}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="text-sm text-gray-600">{cajero.pedidos} pedidos</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`badge ${cajero.estado === 'activo' ? 'badge-success' :
+                          cajero.estado === 'pendiente' ? 'badge-warning' :
+                            'bg-gray-100 text-gray-600'
+                        }`}>
+                        {cajero.estado}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Alert Box */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3">
-        <AlertCircle className="text-yellow-600 flex-shrink-0" size={20} />
-        <div className="flex-1">
-          <p className="text-yellow-800 font-semibold">Recordatorio Importante</p>
-          <p className="text-yellow-700 text-sm">
-            El cierre de caja del turno AM debe realizarse a las 15:00. 
-            Hay 2 facturas pendientes de revisión.
-          </p>
         </div>
       </div>
     </div>
