@@ -2,6 +2,7 @@
 module.exports = (sequelize, DataTypes) => {
   return sequelize.define('Pedido', {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    numero_diario: { type: DataTypes.INTEGER, defaultValue: 0 },
     mesa: { type: DataTypes.INTEGER, allowNull: false },
     cajero_nombre: { type: DataTypes.STRING(120), allowNull: false },
     turno: { type: DataTypes.ENUM('AM', 'PM'), defaultValue: 'AM' },

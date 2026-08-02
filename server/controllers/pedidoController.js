@@ -122,7 +122,25 @@ const createPedido = async (req, res) => {
       return res.status(400).json({ success: false, error: 'La razón social es obligatoria' });
     }
 
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const maxNumeroDiario = await Pedido.max('numero_diario', {
+      where: {
+        fecha_pedido: {
+          [Op.between]: [startOfDay, endOfDay]
+        }
+      },
+      transaction: t
+    });
+
+    const numero_diario = (maxNumeroDiario || 0) + 1;
+
     const pedido = await Pedido.create({
+      numero_diario,
       mesa,
       cajero_nombre: nombre,
       turno: turno || 'AM',

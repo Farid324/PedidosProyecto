@@ -12,6 +12,7 @@ import RegistrarModal from '../../../components/pedidos/RegistrarModal'
 import CuentaModal from '../../../components/pedidos/CuentaModal'
 import CuentaConfirmModal from '../../../components/pedidos/CuentaConfirmModal'
 import FinalizarModal from '../../../components/pedidos/FinalizarModal'
+import FinalizarTodasModal from '../../../components/pedidos/FinalizarTodasModal'
 
 function PedidosPage() {
   const { role } = useAuthStore()
@@ -39,6 +40,8 @@ function PedidosPage() {
   const [cuentaModalOpen, setCuentaModalOpen] = useState(false)
   const [cuentaConfirmModalOpen, setCuentaConfirmModalOpen] = useState(false)
   const [finalizarModalOpen, setFinalizarModalOpen] = useState(false)
+  const [finalizarTodasModalOpen, setFinalizarTodasModalOpen] = useState(false)
+  const [isFinalizandoTodas, setIsFinalizandoTodas] = useState(false)
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' })
 
   // Carga inicial
@@ -184,10 +187,6 @@ function PedidosPage() {
       showToast('Agrega al menos un platillo a la orden', 'error')
       return
     }
-    if (!clienteInfo.razonSocial.trim()) {
-      showToast('Por favor ingrese la Razón Social del cliente', 'error')
-      return
-    }
     setRegistrarModalOpen(true)
   }
 
@@ -199,13 +198,16 @@ function PedidosPage() {
         cantidad: item.cantidad,
       }))
 
+      const finalRazonSocial = clienteInfo.razonSocial.trim() || 'Sin nombre';
+      const finalNit = clienteInfo.nit.trim() || '00000';
+
       if (pedidoActivo) {
         // Actualizar pedido existente
         await pedidoService.updatePedidoItems(pedidoActivo.id, {
           items,
           observaciones,
-          razon_social: clienteInfo.razonSocial,
-          nit: clienteInfo.nit,
+          razon_social: finalRazonSocial,
+          nit: finalNit,
           tipo_pedido: tipoPedido,
         })
       } else {
@@ -214,8 +216,8 @@ function PedidosPage() {
           mesa: selectedMesa,
           items,
           observaciones,
-          razon_social: clienteInfo.razonSocial,
-          nit: clienteInfo.nit,
+          razon_social: finalRazonSocial,
+          nit: finalNit,
           tipo_pedido: tipoPedido,
         })
       }
@@ -263,6 +265,36 @@ function PedidosPage() {
     }
   }
 
+  const handleConfirmFinalizarTodas = async () => {
+    setIsFinalizandoTodas(true)
+    try {
+      const res = await pedidoService.getPedidos({ estado: 'pendiente' })
+      const pedidosPendientes = res.data || []
+      
+      await Promise.all(
+        pedidosPendientes.map(pedido => 
+          pedidoService.finalizarPedido(pedido.id, pedido.pago_qr ? 'QR' : 'EFECTIVO')
+        )
+      )
+
+      setPedidoActivo(null)
+      setCarrito({})
+      setClienteInfo({ razonSocial: '', nit: '' })
+      setObservaciones('')
+      setPagoQR(false)
+      setSelectedMesa(null)
+      await fetchMesasOcupadas()
+      
+      setFinalizarTodasModalOpen(false)
+      showToast('Todas las mesas fueron finalizadas', 'success')
+    } catch (error) {
+      console.error("Error finalizando todas las mesas:", error)
+      showToast('Error al finalizar algunas mesas', 'error')
+    } finally {
+      setIsFinalizandoTodas(false)
+    }
+  }
+
   // COMANDA (impresión para cocina)
   const handleComanda = () => {
     if (Object.keys(carrito).length === 0) {
@@ -271,7 +303,11 @@ function PedidosPage() {
     }
 
     const items = Object.values(carrito)
-    const printWindow = window.open('', '_blank', 'width=350,height=600')
+    const width = Math.floor(window.screen.width / 2);
+    const height = Math.floor(window.screen.height / 2);
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+    const printWindow = window.open('', '_blank', `width=${width},height=${height},left=${left},top=${top}`)
     
     let html = `
       <!DOCTYPE html>
@@ -295,6 +331,7 @@ function PedidosPage() {
       <body>
         <div class="text-center title">COMANDA DE COCINA</div>
         <div class="info">
+          <div><strong>PEDIDO NRO:</strong> ${pedidoActivo ? (pedidoActivo.numero_diario || pedidoActivo.id) : '--'}</div>
           <div><strong>MESA:</strong> ${selectedMesa || '--'}</div>
           <div><strong>FECHA:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
         </div>
@@ -308,9 +345,8 @@ function PedidosPage() {
 
     html += `</div>`;
     
-    if (observaciones) {
-      html += `<div class="divider"></div><div class="obs"><strong>OBS:</strong><br/>${observaciones}</div>`;
-    }
+    const finalObservaciones = observaciones ? observaciones.trim() : 'Sin descripcion';
+    html += `<div class="divider"></div><div class="obs"><strong>OBS:</strong><br/>${finalObservaciones}</div>`;
     
     html += `
         <div class="divider"></div>
@@ -380,7 +416,11 @@ function PedidosPage() {
     const items = Object.values(carrito)
     const metodo = pagoQR ? 'QR' : 'EFECTIVO'
     
-    const printWindow = window.open('', '_blank', 'width=350,height=600')
+    const width = Math.floor(window.screen.width / 2);
+    const height = Math.floor(window.screen.height / 2);
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+    const printWindow = window.open('', '_blank', `width=${width},height=${height},left=${left},top=${top}`)
     
     let html = `
       <!DOCTYPE html>
@@ -414,10 +454,12 @@ function PedidosPage() {
         </div>
         
         <div class="info-block">
+          <div><strong>Pedido Nro:</strong> ${pedidoActivo ? (pedidoActivo.numero_diario || pedidoActivo.id) : '--'}</div>
           <div><strong>Fecha:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
           <div><strong>Mesa:</strong> ${selectedMesa || '--'}</div>
-          <div><strong>Cliente:</strong> ${clienteInfo.razonSocial || 'S/N'}</div>
-          ${clienteInfo.nit ? `<div><strong>NIT/CI:</strong> ${clienteInfo.nit}</div>` : ''}
+          <div><strong>Cliente:</strong> ${clienteInfo.razonSocial || 'Sin nombre'}</div>
+          <div><strong>NIT/CI:</strong> ${clienteInfo.nit || '00000'}</div>
+          <div><strong>Obs:</strong> ${observaciones ? observaciones.trim() : 'Sin descripcion'}</div>
         </div>
         
         <div class="divider"></div>
@@ -478,6 +520,14 @@ function PedidosPage() {
           <h1 className="text-3xl font-bold text-[var(--gris-primario)]">Pedidos</h1>
           <p className="text-[var(--gris-primario)] mt-1">Gestión de pedidos del restaurant</p>
         </div>
+        {mesasOcupadas.length > 0 && (
+          <button
+            onClick={() => setFinalizarTodasModalOpen(true)}
+            className="px-4 py-2 bg-[var(--guindo-primario)] text-white text-sm font-bold rounded-lg hover:bg-red-800 transition-colors shadow-sm"
+          >
+            Finalizar Todas las Mesas
+          </button>
+        )}
       </div>
 
       {/* Contenedor Principal */}
@@ -557,6 +607,13 @@ function PedidosPage() {
         isOpen={finalizarModalOpen}
         onClose={() => setFinalizarModalOpen(false)}
         onConfirm={handleConfirmFinalizar}
+      />
+
+      <FinalizarTodasModal
+        isOpen={finalizarTodasModalOpen}
+        onClose={() => setFinalizarTodasModalOpen(false)}
+        onConfirm={handleConfirmFinalizarTodas}
+        isFinalizando={isFinalizandoTodas}
       />
 
       {/* Toast Notification */}

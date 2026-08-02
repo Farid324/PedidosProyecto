@@ -1,9 +1,19 @@
 // src/components/pedidos/TableSelector.jsx
 import { useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupadas = [] }) {
-  const mesas = Array.from({ length: 20 }, (_, i) => ({
+  const [extraTables, setExtraTables] = useState(0)
+
+  const maxOccupied = mesasOcupadas.reduce((max, m) => {
+    const id = typeof m === 'object' ? m.id : m;
+    const num = Number(id);
+    return !isNaN(num) && num > max ? num : max;
+  }, 0);
+
+  const totalTables = Math.max(20 + extraTables, maxOccupied);
+
+  const mesas = Array.from({ length: totalTables }, (_, i) => ({
     id: i + 1,
     nombre: `Mesa ${i + 1}`
   }))
@@ -131,6 +141,13 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
               )}
             </div>
           ))}
+          <div
+            onClick={() => { if (!isDragging) setExtraTables(prev => prev + 1) }}
+            className="min-w-[200px] h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center transition-all duration-200 hover:border-[var(--guindo-primario)] hover:bg-gray-50 cursor-pointer text-gray-400 hover:text-[var(--guindo-primario)] shrink-0"
+          >
+            <Plus size={24} />
+            <span className="text-xs uppercase font-bold tracking-wider mt-1">Agregar Mesa</span>
+          </div>
         </div>
 
         <button 
