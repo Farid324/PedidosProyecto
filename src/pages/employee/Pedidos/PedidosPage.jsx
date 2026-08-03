@@ -15,7 +15,7 @@ import FinalizarModal from '../../../components/pedidos/FinalizarModal'
 import FinalizarTodasModal from '../../../components/pedidos/FinalizarTodasModal'
 
 function PedidosPage() {
-  const { role } = useAuthStore()
+  const { role, turno } = useAuthStore()
   
   // Estado de datos
   const [selectedMesa, setSelectedMesa] = useState(null)
@@ -313,7 +313,7 @@ function PedidosPage() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Comanda - Ca valluna</title>
+        <title>Comanda - Casa valluna</title>
         <style>
           @page { margin: 0; }
           body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 10px; width: 280px; color: #000; }
@@ -333,6 +333,7 @@ function PedidosPage() {
         <div class="info">
           <div><strong>PEDIDO NRO:</strong> ${pedidoActivo ? (pedidoActivo.numero_diario || pedidoActivo.id) : '--'}</div>
           <div><strong>TIPO:</strong> ${tipoPedido === 'llevar' ? 'PARA LLEVAR' : 'PARA INTERNO'}</div>
+          <div><strong>TURNO:</strong> ${turno === 'AM' ? 'MAÑANA' : 'TARDE'}</div>
           <div><strong>MESA:</strong> ${selectedMesa || '--'}</div>
           <div><strong>FECHA:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
         </div>
@@ -351,7 +352,7 @@ function PedidosPage() {
     
     html += `
         <div class="divider"></div>
-        <div class="text-center" style="font-size: 10px; margin-top: 5px;">Ca valluna</div>
+        <div class="text-center" style="font-size: 10px; margin-top: 5px;">Casa valluna</div>
         <script>
           window.onload = function() { 
             setTimeout(function() { window.print(); window.close(); }, 200);
@@ -427,7 +428,7 @@ function PedidosPage() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Factura - Ca valluna</title>
+        <title>Factura - Casa valluna</title>
         <style>
           @page { margin: 0; }
           body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 10px; width: 280px; color: #000; }
@@ -449,7 +450,7 @@ function PedidosPage() {
       </head>
       <body>
         <div class="text-center header">
-          <div class="brand">CA VALLUNA</div>
+          <div class="brand">CASA VALLUNA</div>
           <div style="font-size: 12px; font-weight: bold; border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px;">TICKET DE VENTA</div>
         </div>
         

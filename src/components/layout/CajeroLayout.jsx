@@ -54,6 +54,7 @@ function CajeroLayout() {
     localStorage.setItem(`cajero_notifications_${user?.id || 'default'}`, JSON.stringify(notifications))
   }, [notifications, user])
   const warned15Min = useRef(false)
+  const warnedFin = useRef(false)
   const warnedPendientes = useRef(new Set())
 
   // Reloj en tiempo real
@@ -61,8 +62,10 @@ function CajeroLayout() {
 
   // Configuración de turnos para validar el cambio
   const [configTurnos, setConfigTurnos] = useState({
+    turno_manana_ingreso: '',
     turno_manana_salida: '',
-    turno_tarde_ingreso: ''
+    turno_tarde_ingreso: '',
+    turno_tarde_salida: ''
   })
 
   useEffect(() => {
@@ -81,14 +84,18 @@ function CajeroLayout() {
         }
 
         // Cargar horarios para validación de cambio de turno
-        const [tmSalida, ttIngreso] = await Promise.all([
+        const [tmIngreso, tmSalida, ttIngreso, ttSalida] = await Promise.all([
+          api.get('/config/turno_manana_ingreso'),
           api.get('/config/turno_manana_salida'),
-          api.get('/config/turno_tarde_ingreso')
+          api.get('/config/turno_tarde_ingreso'),
+          api.get('/config/turno_tarde_salida')
         ]);
         
         setConfigTurnos({
+          turno_manana_ingreso: tmIngreso.data?.data?.valor || '08:00',
           turno_manana_salida: tmSalida.data?.data?.valor || '14:00',
-          turno_tarde_ingreso: ttIngreso.data?.data?.valor || '14:00'
+          turno_tarde_ingreso: ttIngreso.data?.data?.valor || '14:00',
+          turno_tarde_salida: ttSalida.data?.data?.valor || '22:00'
         });
 
       } catch(e) {}
@@ -101,7 +108,7 @@ function CajeroLayout() {
       setCurrentTime(now); // Actualizar reloj en Navbar
 
       // 1. Revisión de fin de turno
-      if (notifyFinTurno && horaSalidaTurno && !warned15Min.current) {
+      if (notifyFinTurno && horaSalidaTurno) {
         const [hSalida, mSalida] = horaSalidaTurno.split(':').map(Number);
         const salidaDate = new Date();
         salidaDate.setHours(hSalida, mSalida, 0, 0);
@@ -109,12 +116,26 @@ function CajeroLayout() {
         const diffMs = salidaDate - now;
         const diffMins = Math.floor(diffMs / 60000);
 
-        if (diffMins <= 15 && diffMins > 0) {
+        if (diffMins <= 15 && diffMins > 0 && !warned15Min.current) {
           warned15Min.current = true;
           setNotifications(prev => [
             {
               id: Date.now(),
               text: `Aviso: Faltan ${diffMins} minutos para que termine su turno (${horaSalidaTurno}).`,
+              time: now.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }),
+              read: false
+            },
+            ...prev
+          ]);
+          playNotificationSound();
+        }
+
+        if (diffMins <= 0 && diffMins >= -120 && !warnedFin.current) { // Solo avisar si no pasaron más de 2h
+          warnedFin.current = true;
+          setNotifications(prev => [
+            {
+              id: Date.now() + 1,
+              text: `Aviso: Su turno ha finalizado (${horaSalidaTurno}). Debe cambiar de turno o cerrar sesión.`,
               time: now.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }),
               read: false
             },
@@ -170,7 +191,7 @@ function CajeroLayout() {
     navigate('/login')
   }
 
-  const handleCambiarTurno = async () => {
+    const handleCambiarTurno = async () => {
     const nuevoTurno = turno === 'AM' ? 'PM' : 'AM';
     const now = new Date();
     
@@ -178,24 +199,32 @@ function CajeroLayout() {
     let puedeCambiar = false;
     let mensajeError = '';
 
-    if (nuevoTurno === 'PM') {
-      // Intentar cambiar a PM. Debe ser >= hora_ingreso de tarde o salida de mañana
-      const [hIngreso, mIngreso] = (configTurnos.turno_tarde_ingreso || '14:00').split(':').map(Number);
-      const ingresoDate = new Date();
-      ingresoDate.setHours(hIngreso, mIngreso, 0, 0);
+    const timeToMinutes = (timeStr) => {
+      if (!timeStr) return 0;
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    };
 
-      if (now >= ingresoDate) {
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+
+    if (nuevoTurno === 'PM') {
+      const amSalidaMins = timeToMinutes(configTurnos.turno_manana_salida);
+      if (currentMins > amSalidaMins) {
         puedeCambiar = true;
       } else {
-        mensajeError = `Tu turno AM aún no termina. El turno PM inicia a las ${configTurnos.turno_tarde_ingreso}.`;
+        mensajeError = `Sigue en el turno de la mañana. (Finaliza a las ${configTurnos.turno_manana_salida})`;
       }
-    } else {
-      // Intentar cambiar a AM (poco común en medio del día, asumiendo que empezó otro ciclo)
-      puedeCambiar = true; 
+    } else { // nuevoTurno === 'AM'
+      const pmSalidaMins = timeToMinutes(configTurnos.turno_tarde_salida);
+      if (currentMins > pmSalidaMins || currentMins < timeToMinutes(configTurnos.turno_manana_salida)) { 
+        puedeCambiar = true; 
+      } else {
+        mensajeError = `Sigue en el turno de la tarde. (Finaliza a las ${configTurnos.turno_tarde_salida})`;
+      }
     }
 
     if (!puedeCambiar) {
-      alert(mensajeError); // Mostrar como alert simple, o integrarlo con un Toast si estuviera disponible aquí.
+      alert(mensajeError); 
       return;
     }
 
