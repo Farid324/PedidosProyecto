@@ -8,6 +8,7 @@ import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
+import LogoutModal from '../common/LogoutModal'
 
 // Sintetizador de audio para la notificación
 const playNotificationSound = () => {
@@ -48,6 +49,7 @@ function CajeroLayout() {
       setToast(prev => ({ ...prev, visible: false }))
     }, 3000)
   }
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   
   const [notifications, setNotifications] = useState(() => {
     try {
@@ -194,7 +196,32 @@ function CajeroLayout() {
     return () => clearInterval(clockInterval);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true)
+  }
+
+  const handleConfirmLogout = async () => {
+    setIsLogoutModalOpen(false)
+    
+    // Auto-finalizar mesas al cerrar sesión
+    try {
+      const [resPend, resProc] = await Promise.all([
+        api.get('/pedidos?estado=pendiente'),
+        api.get('/pedidos?estado=en_proceso')
+      ]);
+      const pedidosPendientes = resPend.data?.data || [];
+      const pedidosProceso = resProc.data?.data || [];
+      const todos = [...pedidosPendientes, ...pedidosProceso];
+
+      for (const pedido of todos) {
+        await api.put(`/pedidos/${pedido.id}/finalizar`, { 
+          metodo_pago: pedido.pago_qr ? 'QR' : 'EFECTIVO' 
+        });
+      }
+    } catch (error) {
+      console.error("Error auto-finalizando mesas al cerrar sesión:", error);
+    }
+
     logout()
     navigate('/login')
   }
@@ -237,6 +264,25 @@ function CajeroLayout() {
     }
 
     if (window.confirm(`¿Quieres cambiar de turno ${turno} a turno ${nuevoTurno}?`)) {
+      // Auto-finalizar mesas al cambiar de turno
+      try {
+        const [resPend, resProc] = await Promise.all([
+          api.get('/pedidos?estado=pendiente'),
+          api.get('/pedidos?estado=en_proceso')
+        ]);
+        const pedidosPendientes = resPend.data?.data || [];
+        const pedidosProceso = resProc.data?.data || [];
+        const todos = [...pedidosPendientes, ...pedidosProceso];
+
+        for (const pedido of todos) {
+          await api.put(`/pedidos/${pedido.id}/finalizar`, { 
+            metodo_pago: pedido.pago_qr ? 'QR' : 'EFECTIVO' 
+          });
+        }
+      } catch (error) {
+        console.error("Error auto-finalizando mesas al cambiar turno:", error);
+      }
+
       const res = await cambiarTurno(nuevoTurno);
       if (res.success) {
         setNotifications(prev => [
@@ -322,7 +368,7 @@ function CajeroLayout() {
     {
       label: 'Cerrar Turno',
       icon: LogOut,
-      onClick: handleLogout,
+      onClick: handleLogoutClick,
       className: 'text-red-600 hover:bg-red-50'
     }
   ]
@@ -337,7 +383,7 @@ function CajeroLayout() {
         currentPath={location.pathname}
         onNavigate={(path) => navigate(path)}
         userRole="cajero"
-        onLogout={handleLogout}
+        onLogout={handleLogoutClick}
       />
 
       {/* Main Content */}
@@ -380,6 +426,11 @@ function CajeroLayout() {
           </div>
         </div>
       )}
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+      />
     </div>
   )
 }

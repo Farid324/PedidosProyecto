@@ -17,5 +17,6 @@ router.get('/mensual', roleMiddleware(['admin']), reporteController.getReporteMe
 router.get('/cajeros', roleMiddleware(['admin']), reporteController.getReporteCajeros);
 router.get('/admin-ventas', roleMiddleware(['admin']), reporteController.getReportesAdministrador);
 router.get('/admin-dashboard', roleMiddleware(['admin']), reporteController.getDashboardAdministrador);
+router.delete('/limpiar-historial', roleMiddleware(['admin']), reporteController.limpiarHistorialAntiguo);
 
 module.exports = router;

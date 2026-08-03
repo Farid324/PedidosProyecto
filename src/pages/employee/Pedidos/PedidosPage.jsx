@@ -271,11 +271,9 @@ function PedidosPage() {
       const res = await pedidoService.getPedidos({ estado: 'pendiente' })
       const pedidosPendientes = res.data || []
       
-      await Promise.all(
-        pedidosPendientes.map(pedido => 
-          pedidoService.finalizarPedido(pedido.id, pedido.pago_qr ? 'QR' : 'EFECTIVO')
-        )
-      )
+      for (const pedido of pedidosPendientes) {
+        await pedidoService.finalizarPedido(pedido.id, pedido.pago_qr ? 'QR' : 'EFECTIVO')
+      }
 
       setPedidoActivo(null)
       setCarrito({})

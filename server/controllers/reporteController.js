@@ -56,6 +56,7 @@ const getMiReporteDiario = async (req, res) => {
 
       return {
         id: f.id,
+        numero_reporte: f.numero_factura || `FAC-${f.id}`,
         numero_pedido: f.Pedido ? f.Pedido.id : f.pedido_id,
         fecha_emision: f.fecha_emision,
         razon_social: f.cliente_nombre,
@@ -277,7 +278,7 @@ const getReportesAdministrador = async (req, res) => {
       include: [
         {
           model: Pedido,
-          attributes: ['turno', 'id']
+          attributes: ['turno', 'id', 'tipo_pedido']
         }
       ],
       order: [['fecha_emision', 'DESC']]
@@ -297,6 +298,7 @@ const getReportesAdministrador = async (req, res) => {
 
       return {
         id: f.id,
+        numero_reporte: f.numero_factura || `FAC-${f.id}`,
         numero_pedido: f.Pedido ? f.Pedido.id : f.pedido_id,
         fecha_emision: f.fecha_emision,
         razon_social: f.cliente_nombre,
@@ -304,7 +306,8 @@ const getReportesAdministrador = async (req, res) => {
         monto_total: monto,
         metodo_pago: f.metodo_pago,
         cajero_nombre: f.cajero_nombre,
-        turno: f.Pedido ? f.Pedido.turno : 'N/D'
+        turno: f.Pedido ? f.Pedido.turno : 'N/D',
+        tipo_pedido: f.Pedido ? f.Pedido.tipo_pedido : 'mesa'
       };
     });
 
@@ -463,6 +466,38 @@ const getDashboardAdministrador = async (req, res) => {
   }
 };
 
+const limpiarHistorialAntiguo = async (req, res) => {
+  try {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const facturas = await Factura.findAll({
+      where: {
+        fecha_emision: { [Op.lt]: sixMonthsAgo }
+      }
+    });
+
+    const pedidoIds = facturas.map(f => f.pedido_id).filter(id => id != null);
+    const facturaIds = facturas.map(f => f.id);
+
+    if (facturaIds.length > 0) {
+      await Factura.destroy({ where: { id: facturaIds } });
+    }
+
+    if (pedidoIds.length > 0) {
+      await Pedido.destroy({ where: { id: pedidoIds } });
+    }
+
+    return res.json({ 
+      success: true, 
+      message: `Se han eliminado ${facturaIds.length} reportes/facturas y sus pedidos asociados con más de 6 meses de antigüedad.`
+    });
+  } catch (error) {
+    console.error('Error en limpiarHistorialAntiguo:', error);
+    return res.status(500).json({ success: false, message: 'Error al limpiar el historial antiguo' });
+  }
+};
+
 module.exports = {
   getMiReporteDiario,
   getReporteDiario,
@@ -470,4 +505,5 @@ module.exports = {
   getReporteCajeros,
   getReportesAdministrador,
   getDashboardAdministrador,
+  limpiarHistorialAntiguo
 };

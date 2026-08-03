@@ -158,20 +158,6 @@ const logoutCajero = async (req, res) => {
   try {
     const { acceso_id, nombre, turno } = req.user;
 
-    // Finalizar pedidos activos del turno actual del cajero antes de salir
-    if (nombre && turno) {
-      await Pedido.update(
-        { estado: 'finalizado' },
-        { 
-          where: { 
-            cajero_nombre: nombre,
-            turno: turno,
-            estado: { [Op.in]: ['pendiente', 'en_proceso'] } 
-          } 
-        }
-      );
-    }
-
     if (acceso_id) {
       await AccesoCajero.update(
         { fecha_salida: new Date() },
@@ -209,21 +195,6 @@ const cambiarTurno = async (req, res) => {
     if (turno === nuevoTurno) {
       await t.rollback();
       return res.status(400).json({ success: false, error: 'Ya estás en ese turno' });
-    }
-
-    // 0. Finalizar mesas actuales del turno anterior antes de cambiar
-    if (nombre && turno) {
-      await Pedido.update(
-        { estado: 'finalizado' },
-        { 
-          where: { 
-            cajero_nombre: nombre,
-            turno: turno,
-            estado: { [Op.in]: ['pendiente', 'en_proceso'] } 
-          },
-          transaction: t
-        }
-      );
     }
 
     // 1. Cerrar el acceso anterior

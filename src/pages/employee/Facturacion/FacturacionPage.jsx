@@ -124,12 +124,12 @@ export default function FacturacionPage() {
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
               <tr>
-                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">ID / Nro</th>
-                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Mesa</th>
-                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Cliente</th>
-                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Total (Bs)</th>
-                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
-                <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
+                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">ID / Nro</th>
+                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Mesa</th>
+                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Cliente</th>
+                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Total (Bs)</th>
+                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
+                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
@@ -147,24 +147,24 @@ export default function FacturacionPage() {
               ) : (
                 filteredPedidos.map(pedido => (
                   <tr key={pedido.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 text-sm font-semibold text-gray-700">
+                    <td className="p-4 text-base font-semibold text-gray-700">
                       {pedido.numero_diario || pedido.id}
                     </td>
                     <td className="p-4">
-                      <span className="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 bg-[var(--azul-secundario)] text-[var(--azul-primario)] font-bold rounded-lg text-sm">
+                      <span className="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 bg-[var(--azul-secundario)] text-[var(--azul-primario)] font-bold rounded-lg text-base">
                         {pedido.mesa || '-'}
                       </span>
                     </td>
                     <td className="p-4">
-                      <div className="text-sm font-medium text-gray-800">{pedido.razon_social || 'Sin nombre'}</div>
-                      {pedido.nit && <div className="text-xs text-gray-500">NIT: {pedido.nit}</div>}
+                      <div className="text-base font-medium text-gray-800">{pedido.razon_social || 'Sin nombre'}</div>
+                      {pedido.nit && <div className="text-sm text-gray-500">NIT: {pedido.nit}</div>}
                     </td>
-                    <td className="p-4 text-sm font-bold text-[var(--azul-primario)]">
+                    <td className="p-4 text-base font-bold text-[var(--azul-primario)]">
                       {Number(pedido.total).toFixed(2)}
                     </td>
                     <td className="p-4">
-                      <div className="text-sm text-gray-700">{new Date(pedido.created_at).toLocaleDateString()}</div>
-                      <div className="text-xs text-gray-500">{new Date(pedido.created_at).toLocaleTimeString()}</div>
+                      <div className="text-base text-gray-700">{new Date(pedido.created_at).toLocaleDateString()}</div>
+                      <div className="text-sm text-gray-500">{new Date(pedido.created_at).toLocaleTimeString()}</div>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">

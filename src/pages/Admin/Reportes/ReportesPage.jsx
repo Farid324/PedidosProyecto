@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter, Eye, Trash2, X } from 'lucide-react';
 import useAuthStore from '../../../store/authStore';
 import api from '../../../services/api';
 
@@ -12,6 +13,11 @@ function ReportesPage() {
   const [reportType, setReportType] = useState('mensual'); // 'mensual' | 'dia'
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+
+  // Detalle Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDetalle, setSelectedDetalle] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Filtros de tabla
   const [searchPedido, setSearchPedido] = useState('');
@@ -87,10 +93,12 @@ function ReportesPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Numero de pedido', 'Fecha de emision', 'Razon Social', 'NIT', 'Monto total', 'Metodo de pago', 'Turno', 'Cajero'];
+    const headers = ['Numero de reporte', 'Numero de pedido', 'Fecha de emision', 'Tipo', 'Razon Social', 'NIT', 'Monto total', 'Metodo de pago', 'Turno', 'Cajero'];
     const rows = filteredVentas.map(v => [
+      v.numero_reporte,
       v.numero_pedido,
       new Date(v.fecha_emision).toLocaleString(),
+      v.tipo_pedido === 'llevar' ? 'Para Llevar' : 'Para Mesa',
       v.razon_social,
       v.nit || 'N/D',
       v.monto_total,
@@ -113,8 +121,8 @@ function ReportesPage() {
   };
 
   const filteredVentas = data.ventas.filter(v => {
-    const matchPedido = v.numero_pedido.toString().includes(searchPedido);
-    const matchRazon = v.razon_social.toLowerCase().includes(searchRazon.toLowerCase());
+    const matchPedido = v.numero_pedido?.toString().includes(searchPedido) || v.numero_reporte?.toLowerCase().includes(searchPedido.toLowerCase());
+    const matchRazon = v.razon_social?.toLowerCase().includes(searchRazon.toLowerCase());
     const matchPago = filterPago === 'Todos' || v.metodo_pago === filterPago;
     const matchTurno = filterTurno === 'Ambos' || v.turno === filterTurno.replace('Turno ', '');
     return matchPedido && matchRazon && matchPago && matchTurno;
@@ -123,6 +131,40 @@ function ReportesPage() {
   const getTitle = () => {
     if (customStart && customEnd) return `Total del ${customStart} al ${customEnd}`;
     return reportType === 'mensual' ? 'Total mensual' : 'Total del día';
+  };
+
+  const handleVerDetalles = async (pedidoId) => {
+    if (!pedidoId) return;
+    setIsModalOpen(true);
+    setModalLoading(true);
+    setSelectedDetalle(null);
+    try {
+      const res = await api.get(`/pedidos/${pedidoId}`);
+      if (res.data.success) {
+        setSelectedDetalle(res.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching detalle:', error);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleLimpiarHistorial = async () => {
+    if (window.confirm("⚠️ ADVERTENCIA: Esta acción eliminará permanentemente todos los reportes y facturas con más de 6 meses de antigüedad. ¿Estás absolutamente seguro de querer continuar?")) {
+      if (window.confirm("Esta acción no se puede deshacer. ¿Proceder con la limpieza?")) {
+        try {
+          const res = await api.delete('/reportes/limpiar-historial');
+          if (res.data.success) {
+            alert(res.data.message || 'Historial limpiado correctamente.');
+            fetchReporte();
+          }
+        } catch (error) {
+          console.error("Error limpiando historial", error);
+          alert('Hubo un error al limpiar el historial.');
+        }
+      }
+    }
   };
 
   return (
@@ -176,10 +218,16 @@ function ReportesPage() {
           </div>
         </div>
 
-        <button onClick={handleExportCSV} className="btn btn-primary flex items-center gap-2 bg-green-600 hover:bg-green-700 py-2.5 border-0">
-          <Download size={20} />
-          Exportar (CSV)
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleExportCSV} className="btn btn-primary flex items-center gap-2 bg-green-600 hover:bg-green-700 py-2.5 border-0">
+            <Download size={20} />
+            Exportar (CSV)
+          </button>
+          <button onClick={handleLimpiarHistorial} className="btn flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 py-2.5 border border-red-200">
+            <Trash2 size={20} />
+            Limpiar Historial Antiguo
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -234,7 +282,7 @@ function ReportesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input 
               type="text" 
-              placeholder="Nro. de Pedido..." 
+              placeholder="Nro. Reporte/Pedido..." 
               className="input pl-10"
               value={searchPedido}
               onChange={(e) => setSearchPedido(e.target.value)}
@@ -282,30 +330,41 @@ function ReportesPage() {
           <table className="w-full text-left">
             <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
               <tr>
+                <th className="py-3 px-4 font-semibold whitespace-nowrap">Nro Reporte</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Nro Pedido</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Fecha de Emisión</th>
+                <th className="py-3 px-4 font-semibold whitespace-nowrap">Tipo</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Razón Social</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">NIT</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Monto Total</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Método de Pago</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Cajero</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Turno</th>
+                <th className="py-3 px-4 font-semibold whitespace-nowrap text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="py-8 text-center text-gray-500">Cargando datos...</td>
+                  <td colSpan="11" className="py-8 text-center text-gray-500">Cargando datos...</td>
                 </tr>
               ) : filteredVentas.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-8 text-center text-gray-500">No se encontraron ventas con los filtros actuales.</td>
+                  <td colSpan="11" className="py-8 text-center text-gray-500">No se encontraron ventas con los filtros actuales.</td>
                 </tr>
               ) : (
                 filteredVentas.map((v) => (
                   <tr key={v.id} className="hover:bg-gray-50/50 transition">
+                    <td className="py-3 px-4 font-semibold text-gray-800 whitespace-nowrap">{v.numero_reporte}</td>
                     <td className="py-3 px-4 font-medium text-gray-800 whitespace-nowrap">#{v.numero_pedido}</td>
                     <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">{new Date(v.fecha_emision).toLocaleString('es-BO')}</td>
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold ${
+                        v.tipo_pedido === 'llevar' ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
+                      }`}>
+                        {v.tipo_pedido === 'llevar' ? 'Para Llevar' : 'Para Mesa'}
+                      </span>
+                    </td>
                     <td className="py-3 px-4 text-sm text-gray-800 whitespace-nowrap">{v.razon_social}</td>
                     <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">{v.nit || 'S/N'}</td>
                     <td className="py-3 px-4 font-semibold text-gray-800 whitespace-nowrap">Bs {Number(v.monto_total).toFixed(2)}</td>
@@ -318,6 +377,15 @@ function ReportesPage() {
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">{v.cajero_nombre}</td>
                     <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">{v.turno}</td>
+                    <td className="py-3 px-4 text-center whitespace-nowrap">
+                      <button 
+                        onClick={() => handleVerDetalles(v.numero_pedido)}
+                        className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition"
+                        title="Ver detalles"
+                      >
+                        <Eye size={18} />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -325,6 +393,112 @@ function ReportesPage() {
           </table>
         </div>
       </div>
+
+      {/* Modal de Detalle */}
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-800">Detalles del Pedido</h2>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              {modalLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : selectedDetalle ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div>
+                      <p className="text-sm text-gray-500">Mesa / Tipo</p>
+                      <p className="font-semibold text-gray-800">
+                        {selectedDetalle.tipo_pedido === 'llevar' ? 'Para Llevar' : `Mesa ${selectedDetalle.mesa}`}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Cajero</p>
+                      <p className="font-semibold text-gray-800">{selectedDetalle.cajero_nombre} (Turno {selectedDetalle.turno})</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Cliente</p>
+                      <p className="font-semibold text-gray-800">{selectedDetalle.razon_social || 'N/D'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">NIT</p>
+                      <p className="font-semibold text-gray-800">{selectedDetalle.nit || 'N/D'}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">Platillos Consumidos</h3>
+                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                      <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-200 text-sm">
+                          <tr>
+                            <th className="py-2 px-4 font-semibold text-gray-600">Platillo</th>
+                            <th className="py-2 px-4 font-semibold text-gray-600 text-center">Cant.</th>
+                            <th className="py-2 px-4 font-semibold text-gray-600 text-right">Precio</th>
+                            <th className="py-2 px-4 font-semibold text-gray-600 text-right">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {selectedDetalle.DetallePedidos?.map((item) => (
+                            <tr key={item.id} className="text-sm">
+                              <td className="py-3 px-4">
+                                <span className="font-medium text-gray-800">{item.Producto?.nombre}</span>
+                                {item.observaciones && (
+                                  <span className="block text-xs text-gray-500 mt-0.5">Nota: {item.observaciones}</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 text-center font-medium">{item.cantidad}</td>
+                              <td className="py-3 px-4 text-right text-gray-600">Bs {Number(item.precio_unitario).toFixed(2)}</td>
+                              <td className="py-3 px-4 text-right font-semibold text-gray-800">Bs {Number(item.subtotal).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot className="bg-gray-50 border-t border-gray-200">
+                          <tr>
+                            <td colSpan="3" className="py-3 px-4 text-right font-bold text-gray-600">Total</td>
+                            <td className="py-3 px-4 text-right font-bold text-gray-900 text-lg">
+                              Bs {Number(selectedDetalle.total).toFixed(2)}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  {selectedDetalle.observaciones && (
+                    <div className="bg-yellow-50 border border-yellow-100 p-4 rounded-xl">
+                      <p className="text-sm font-semibold text-yellow-800 mb-1">Notas Generales del Pedido:</p>
+                      <p className="text-sm text-yellow-700">{selectedDetalle.observaciones}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-gray-500">No se pudieron cargar los detalles.</div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end">
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="btn bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-6 py-2"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
