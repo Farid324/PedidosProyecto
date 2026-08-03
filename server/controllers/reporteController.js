@@ -11,9 +11,16 @@ function endOfDay(d = new Date()) { const x = new Date(d); x.setHours(23,59,59,9
 const getMiReporteDiario = async (req, res) => {
   try {
     const { nombre } = req.user;
-    const targetDate = req.query.date ? new Date(req.query.date + 'T00:00:00') : new Date();
-    const start = startOfDay(targetDate);
-    const end = endOfDay(targetDate);
+    
+    let start, end;
+    if (req.query.startDate && req.query.endDate) {
+      start = startOfDay(new Date(req.query.startDate + 'T00:00:00'));
+      end = endOfDay(new Date(req.query.endDate + 'T00:00:00'));
+    } else {
+      const targetDate = req.query.date ? new Date(req.query.date + 'T00:00:00') : new Date();
+      start = startOfDay(targetDate);
+      end = endOfDay(targetDate);
+    }
 
     let facturas = await Factura.findAll({
       where: { 

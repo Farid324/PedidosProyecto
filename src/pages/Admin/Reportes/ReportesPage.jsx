@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter, Eye, Trash2, X } from 'lucide-react';
+import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter, Eye, Trash2, X, FileText } from 'lucide-react';
 import useAuthStore from '../../../store/authStore';
 import api from '../../../services/api';
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
 
 function ReportesPage() {
   const { role, user } = useAuthStore();
@@ -10,9 +13,28 @@ function ReportesPage() {
   const [loading, setLoading] = useState(true);
 
   // Filtros de fecha
-  const [reportType, setReportType] = useState('mensual'); // 'mensual' | 'dia'
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
+  const [period, setPeriod] = useState('mes');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    const today = new Date();
+    if (period === 'hoy') {
+      const dateStr = today.toISOString().split('T')[0];
+      setStartDate(dateStr);
+      setEndDate(dateStr);
+    } else if (period === 'ayer') {
+      const ayer = new Date();
+      ayer.setDate(ayer.getDate() - 1);
+      const dateStr = ayer.toISOString().split('T')[0];
+      setStartDate(dateStr);
+      setEndDate(dateStr);
+    } else if (period === 'mes') {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      setStartDate(firstDay.toISOString().split('T')[0]);
+      setEndDate(today.toISOString().split('T')[0]);
+    }
+  }, [period]);
 
   // Detalle Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,7 +53,7 @@ function ReportesPage() {
       fetchReporteSilent();
     }, 5000);
     return () => clearInterval(interval);
-  }, [reportType, customStart, customEnd]);
+  }, [startDate, endDate]);
 
   const fetchReporte = async () => {
     setLoading(true);
@@ -39,15 +61,9 @@ function ReportesPage() {
       let url = '/reportes/admin-ventas';
       const params = new URLSearchParams();
 
-      if (customStart && customEnd) {
-        params.append('startDate', customStart);
-        params.append('endDate', customEnd);
-      } else if (reportType === 'dia') {
-        const today = new Date().toISOString().split('T')[0];
-        params.append('startDate', today);
-        params.append('endDate', today);
-      } else {
-        // mensual - the backend handles default correctly
+      if (startDate && endDate) {
+        params.append('startDate', startDate);
+        params.append('endDate', endDate);
       }
 
       if (params.toString()) {
@@ -70,13 +86,9 @@ function ReportesPage() {
       let url = '/reportes/admin-ventas';
       const params = new URLSearchParams();
 
-      if (customStart && customEnd) {
-        params.append('startDate', customStart);
-        params.append('endDate', customEnd);
-      } else if (reportType === 'dia') {
-        const today = new Date().toISOString().split('T')[0];
-        params.append('startDate', today);
-        params.append('endDate', today);
+      if (startDate && endDate) {
+        params.append('startDate', startDate);
+        params.append('endDate', endDate);
       }
 
       if (params.toString()) {
@@ -114,10 +126,51 @@ function ReportesPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `reporte_ventas_${new Date().toISOString().split('T')[0]}.csv`);
+    const periodLabel = period === 'hoy' ? 'Hoy' : period === 'ayer' ? 'Ayer' : period === 'mes' ? 'Este_Mes' : `${startDate}_a_${endDate}`;
+    link.setAttribute("download", `reporte_ventas_${periodLabel}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleExportPDF = () => {
+    const periodLabel = period === 'hoy' ? 'Hoy' : period === 'ayer' ? 'Ayer' : period === 'mes' ? 'Este_Mes' : `${startDate}_a_${endDate}`;
+    
+    const documentDefinition = {
+      content: [
+        { text: 'Reporte General de Ventas - Administrador', style: 'header' },
+        { text: `Período: ${periodLabel.replace(/_/g, ' ')}`, style: 'subheader' },
+        { text: '\n' },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', 'auto', 'auto', 'auto', '*', 'auto', 'auto', 'auto'],
+            body: [
+              [{text:'Nro Reporte', bold:true}, {text:'Fecha', bold:true}, {text:'Tipo', bold:true}, {text:'Cliente', bold:true}, {text:'Total', bold:true}, {text:'Método', bold:true}, {text:'Turno', bold:true}, {text:'Cajero', bold:true}],
+              ...filteredVentas.map(v => [
+                v.numero_reporte,
+                new Date(v.fecha_emision).toLocaleString('es-BO'),
+                v.tipo_pedido === 'llevar' ? 'Para Llevar' : 'Para Mesa',
+                v.razon_social || 'S/N',
+                `Bs ${Number(v.monto_total).toFixed(2)}`,
+                v.metodo_pago,
+                v.turno,
+                v.cajero_nombre
+              ])
+            ]
+          }
+        },
+        { text: '\n' },
+        { text: `Total Ventas: Bs ${data.resumen?.total_ventas?.toFixed(2) || '0.00'}`, style: 'totalText' }
+      ],
+      styles: {
+        header: { fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+        subheader: { fontSize: 12, margin: [0, 5, 0, 5] },
+        totalText: { fontSize: 14, bold: true, alignment: 'right', margin: [0, 10, 0, 0] }
+      },
+      pageOrientation: 'landscape'
+    };
+    pdfMake.createPdf(documentDefinition).download(`reporte_ventas_${periodLabel}.pdf`);
   };
 
   const filteredVentas = data.ventas.filter(v => {
@@ -129,8 +182,10 @@ function ReportesPage() {
   });
 
   const getTitle = () => {
-    if (customStart && customEnd) return `Total del ${customStart} al ${customEnd}`;
-    return reportType === 'mensual' ? 'Total mensual' : 'Total del día';
+    if (period === 'hoy') return 'Total de hoy';
+    if (period === 'ayer') return 'Total de ayer';
+    if (period === 'mes') return 'Total del mes';
+    return `Total del ${startDate} al ${endDate}`;
   };
 
   const handleVerDetalles = async (pedidoId) => {
@@ -182,50 +237,56 @@ function ReportesPage() {
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-end justify-between">
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex flex-col">
-            <label className="text-sm text-gray-600 mb-1 font-medium">Tipo de Reporte</label>
+            <label className="text-sm text-gray-600 mb-1 font-medium">Seleccionar Período</label>
             <select 
-              className="input bg-gray-50 border-gray-200 py-2.5"
-              value={reportType}
-              onChange={(e) => {
-                setReportType(e.target.value);
-                setCustomStart('');
-                setCustomEnd('');
-              }}
+              className="input bg-gray-50 border-gray-200 py-2.5 min-w-[200px]"
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
             >
-              <option value="mensual">Reporte Mensual</option>
-              <option value="dia">Reporte por día</option>
+              <option value="hoy">Hoy</option>
+              <option value="ayer">Ayer</option>
+              <option value="mes">Este Mes</option>
+              <option value="rango">Rango Personalizado</option>
             </select>
           </div>
-          
-          <div className="flex flex-col">
-            <label className="text-sm text-gray-600 mb-1 font-medium">Fecha Inicio</label>
-            <input 
-              type="date" 
-              className="input bg-gray-50 border-gray-200 py-2.5"
-              value={customStart}
-              onChange={(e) => setCustomStart(e.target.value)}
-            />
-          </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm text-gray-600 mb-1 font-medium">Fecha Fin</label>
-            <input 
-              type="date" 
-              className="input bg-gray-50 border-gray-200 py-2.5"
-              value={customEnd}
-              onChange={(e) => setCustomEnd(e.target.value)}
-            />
-          </div>
+          {period === 'rango' && (
+            <>
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1 font-medium">Fecha Inicio</label>
+                <input 
+                  type="date" 
+                  className="input bg-gray-50 border-gray-200 py-2.5"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1 font-medium">Fecha Fin</label>
+                <input 
+                  type="date" 
+                  className="input bg-gray-50 border-gray-200 py-2.5"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex gap-2">
           <button onClick={handleExportCSV} className="btn btn-primary flex items-center gap-2 bg-green-600 hover:bg-green-700 py-2.5 border-0">
             <Download size={20} />
-            Exportar (CSV)
+            CSV
           </button>
-          <button onClick={handleLimpiarHistorial} className="btn flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 py-2.5 border border-red-200">
+          <button onClick={handleExportPDF} className="btn btn-primary flex items-center gap-2 bg-red-600 hover:bg-red-700 py-2.5 border-0">
+            <FileText size={20} />
+            PDF
+          </button>
+          <button onClick={handleLimpiarHistorial} className="btn flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 py-2.5 border border-red-200 ml-2">
             <Trash2 size={20} />
-            Limpiar Historial Antiguo
+            Limpiar Historial
           </button>
         </div>
       </div>
