@@ -38,15 +38,15 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
     const walk = (x - startX) * 2
     scrollRef.current.scrollLeft = scrollLeft - walk
   }
-  
+
   const handleClick = (id) => {
     if (!isDragging) onSelectMesa(id)
   }
 
   const getMesaState = (mesaId) => {
     if (selectedMesa === mesaId) return 'selected'
-    
-    const mesaObj = mesasOcupadas.find(m => 
+
+    const mesaObj = mesasOcupadas.find(m =>
       (typeof m === 'object' ? m.id === mesaId : m === mesaId)
     )
 
@@ -60,7 +60,7 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
   const getMesaClasses = (mesaId) => {
     const state = getMesaState(mesaId)
     const base = 'min-w-[200px] h-20 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 transform'
-    
+
     switch (state) {
       case 'selected':
         return `${base} bg-[var(--guindo-primario)] border-[var(--guindo-primario)] text-white shadow-md scale-105`
@@ -97,16 +97,16 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
           )}
         </div>
       </div>
-      
+
       <div className="relative group">
-        <button 
+        <button
           onClick={() => scroll('left')}
           className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg p-2 rounded-full text-[var(--guindo-primario)] border border-gray-100 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-gray-50 hover:scale-110 disabled:opacity-0"
         >
           <ChevronLeft size={20} />
         </button>
 
-        <div 
+        <div
           ref={scrollRef}
           className="flex gap-3 overflow-x-auto py-2 px-1 scrollbar-hide cursor-grab active:cursor-grabbing select-none"
           onMouseDown={handleMouseDown}
@@ -133,7 +133,7 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
           ))}
         </div>
 
-        <button 
+        <button
           onClick={() => scroll('right')}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg p-2 rounded-full text-[var(--guindo-primario)] border border-gray-100 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-gray-50 hover:scale-110"
         >
