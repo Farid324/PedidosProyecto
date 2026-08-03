@@ -5,6 +5,33 @@ import TextInput from '../../../components/common/inputs/TextInput'
 import DetallePedidoModal from '../../../components/pedidos/DetallePedidoModal'
 import EliminarPedidoModal from '../../../components/pedidos/EliminarPedidoModal'
 
+// Skeleton loader para la tabla
+function TableSkeleton() {
+  return (
+    <div className="space-y-3 p-4">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="flex items-center gap-4 animate-pulse">
+          <div className="h-5 bg-gray-200 rounded w-16" />
+          <div className="h-8 bg-gray-200 rounded-lg w-10" />
+          <div className="flex-1 space-y-1.5">
+            <div className="h-4 bg-gray-200 rounded w-40" />
+            <div className="h-3 bg-gray-100 rounded w-24" />
+          </div>
+          <div className="h-5 bg-gray-200 rounded w-20" />
+          <div className="space-y-1.5">
+            <div className="h-4 bg-gray-200 rounded w-24" />
+            <div className="h-3 bg-gray-100 rounded w-16" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-8 w-8 bg-gray-200 rounded-lg" />
+            <div className="h-8 w-8 bg-gray-200 rounded-lg" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function FacturacionPage() {
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -73,18 +100,20 @@ export default function FacturacionPage() {
   }
 
   return (
-    <div className="space-y-6 h-[calc(100vh-6rem)] flex flex-col">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[var(--gris-primario)]">Gestión de Pedidos</h1>
           <p className="text-[var(--gris-primario)] mt-1">Revisa y administra los pedidos registrados y finalizados</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col min-h-0 flex-1">
-        
-        {/* Header Tabs y Search */}
-        <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between gap-4 bg-gray-50/50 shrink-0">
+      {/* Card contenedor de la lista (estilo Reportes) */}
+      <div className="card space-y-4">
+        <h3 className="text-lg font-bold text-gray-800 border-b pb-3">Lista de Pedidos</h3>
+
+        {/* Tabs y Search */}
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div className="flex bg-gray-100 p-1 rounded-lg">
             <button
               onClick={() => setTab('registrados')}
@@ -119,78 +148,78 @@ export default function FacturacionPage() {
           </div>
         </div>
 
-        {/* Tabla */}
-        <div className="flex-1 overflow-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse min-w-[600px]">
-            <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
-              <tr>
-                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">ID / Nro</th>
-                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Mesa</th>
-                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Cliente</th>
-                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Total (Bs)</th>
-                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
-                <th className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {loading ? (
+        {/* Tabla dentro del card */}
+        <div className="overflow-x-auto rounded-lg border border-gray-200">
+          {loading ? (
+            <TableSkeleton />
+          ) : (
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-gray-500">Cargando pedidos...</td>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">ID / Nro</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">Mesa</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">Cliente</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">Total (Bs)</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">Fecha</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap text-right">Acciones</th>
                 </tr>
-              ) : filteredPedidos.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="p-12 text-center text-gray-400">
-                    <Receipt size={48} className="mx-auto mb-3 opacity-30" />
-                    <p>No se encontraron pedidos {tab === 'registrados' ? 'registrados' : 'finalizados'}.</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredPedidos.map(pedido => (
-                  <tr key={pedido.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 text-base font-semibold text-gray-700">
-                      {pedido.numero_diario || pedido.id}
-                    </td>
-                    <td className="p-4">
-                      <span className="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 bg-[var(--azul-secundario)] text-[var(--azul-primario)] font-bold rounded-lg text-base">
-                        {pedido.mesa || '-'}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-base font-medium text-gray-800">{pedido.razon_social || 'Sin nombre'}</div>
-                      {pedido.nit && <div className="text-sm text-gray-500">NIT: {pedido.nit}</div>}
-                    </td>
-                    <td className="p-4 text-base font-bold text-[var(--azul-primario)]">
-                      {Number(pedido.total).toFixed(2)}
-                    </td>
-                    <td className="p-4">
-                      <div className="text-base text-gray-700">{new Date(pedido.created_at).toLocaleDateString()}</div>
-                      <div className="text-sm text-gray-500">{new Date(pedido.created_at).toLocaleTimeString()}</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleView(pedido)}
-                          className="p-2 text-gray-400 hover:text-[var(--azul-primario)] hover:bg-[var(--azul-secundario)] rounded-lg transition-colors"
-                          title="Ver Detalle"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        {tab === 'registrados' && (
-                          <button
-                            onClick={() => handleDeleteClick(pedido)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Eliminar Pedido"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        )}
-                      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredPedidos.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-12 text-center text-gray-400">
+                      <Receipt size={48} className="mx-auto mb-3 opacity-30" />
+                      <p>No se encontraron pedidos {tab === 'registrados' ? 'registrados' : 'finalizados'}.</p>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredPedidos.map(pedido => (
+                    <tr key={pedido.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-3 px-4 font-medium text-gray-800 whitespace-nowrap text-base">
+                        #{pedido.numero_diario || pedido.id}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center justify-center min-w-[2rem] h-8 px-2 bg-[var(--azul-secundario)] text-[var(--azul-primario)] font-bold rounded-lg text-base">
+                          {pedido.mesa || '-'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="text-base font-medium text-gray-800">{pedido.razon_social || 'Sin nombre'}</div>
+                        {pedido.nit && <div className="text-sm text-gray-500">NIT: {pedido.nit}</div>}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-[var(--azul-primario)] whitespace-nowrap text-base">
+                        Bs {Number(pedido.total).toFixed(2)}
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="text-base text-gray-700">{new Date(pedido.created_at).toLocaleDateString()}</div>
+                        <div className="text-sm text-gray-500">{new Date(pedido.created_at).toLocaleTimeString()}</div>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleView(pedido)}
+                            className="p-2 text-gray-400 hover:text-[var(--azul-primario)] hover:bg-[var(--azul-secundario)] rounded-lg transition-colors"
+                            title="Ver Detalle"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          {tab === 'registrados' && (
+                            <button
+                              onClick={() => handleDeleteClick(pedido)}
+                              className="p-2 text-gray-400 hover:text-[var(--guindo-primario)] hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar Pedido"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
