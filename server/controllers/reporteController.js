@@ -393,11 +393,15 @@ const getDashboardAdministrador = async (req, res) => {
         }
       ]
     });
-    
+    const todasCategorias = await Categoria.findAll();
     const catMap = {};
+    todasCategorias.forEach(c => {
+      catMap[c.nombre] = 0;
+    });
+
     for (let d of detalles) {
       const catName = d.Producto?.categoria?.nombre || 'Otros';
-      if (!catMap[catName]) catMap[catName] = 0;
+      if (catMap[catName] === undefined) catMap[catName] = 0;
       catMap[catName] += Number(d.subtotal || 0);
     }
     const ventas_por_categoria = Object.keys(catMap).map(k => ({
@@ -434,8 +438,7 @@ const getDashboardAdministrador = async (req, res) => {
     accesos.forEach(a => {
       cajerosUnicos.set(a.nombre_cajero, {
         nombre: a.nombre_cajero,
-        turno: a.turno,
-        ventas: `Bs ${salesMap[a.nombre_cajero]?.monto.toFixed(2) || '0.00'}`,
+        ventas: `Bs ${Number(salesMap[a.nombre_cajero]?.monto || 0).toFixed(2)}`,
         pedidos: salesMap[a.nombre_cajero]?.cantidad || 0,
         estado: a.fecha_salida ? 'inactivo' : 'activo'
       });
@@ -445,10 +448,9 @@ const getDashboardAdministrador = async (req, res) => {
       if (!cajerosUnicos.has(r.cajero_nombre)) {
         cajerosUnicos.set(r.cajero_nombre, {
           nombre: r.cajero_nombre || 'N/D',
-          turno: 'N/D',
           ventas: `Bs ${Number(r.monto || 0).toFixed(2)}`,
           pedidos: r.cantidad || 0,
-          estado: 'activo'
+          estado: 'N/D'
         });
       }
     });

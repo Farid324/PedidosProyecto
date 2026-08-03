@@ -6,6 +6,9 @@ import {
 } from 'lucide-react'
 import useAuthStore from '../../../store/authStore'
 import api from '../../../services/api'
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
 
 function AdminDashboard() {
   const { user } = useAuthStore()
@@ -56,6 +59,40 @@ function AdminDashboard() {
     }
   }
 
+  const handleExportPDF = () => {
+    const documentDefinition = {
+      content: [
+        { text: 'Reporte Diario General', style: 'header' },
+        { text: `Fecha: ${new Date().toLocaleDateString('es-BO')}`, style: 'subheader' },
+        { text: '\n' },
+        { text: 'Resumen de Ventas por Empleado', style: 'subheader' },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['*', 'auto', 'auto', 'auto'],
+            body: [
+              [{text:'Cajero', bold:true}, {text:'Pedidos', bold:true}, {text:'Ventas', bold:true}, {text:'Estado', bold:true}],
+              ...data.cajeros_turnos.map(c => [
+                c.nombre,
+                c.pedidos.toString(),
+                c.ventas,
+                c.estado === 'activo' ? 'En Turno' : 'Cerrado'
+              ])
+            ]
+          }
+        },
+        { text: '\n' },
+        { text: `Total Recaudado Hoy: ${data.ventas_del_dia}`, style: 'totalText' }
+      ],
+      styles: {
+        header: { fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+        subheader: { fontSize: 12, margin: [0, 5, 0, 5] },
+        totalText: { fontSize: 14, bold: true, alignment: 'right', margin: [0, 10, 0, 0] }
+      }
+    };
+    pdfMake.createPdf(documentDefinition).download(`reporte_general_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   const statsCards = [
     {
       title: 'Ventas del Día',
@@ -89,18 +126,9 @@ function AdminDashboard() {
           <p className="text-[var(--gris-primario)] mt-1">Bienvenido, {user?.name}</p>
         </div>
         <div className="flex gap-3 items-center">
-          <input
-            type="date"
-            className="input bg-white border-gray-200 py-2"
-            value={targetDate}
-            onChange={(e) => setTargetDate(e.target.value)}
-          />
-          <button
-            onClick={() => navigate('/admin/reportes')}
-            className="btn btn-primary flex items-center gap-2"
-          >
+          <button onClick={handleExportPDF} className="btn btn-primary flex items-center gap-2 bg-red-600 hover:bg-red-700 border-0">
             <FileText size={20} />
-            Generar Reporte
+            Generar Reporte (PDF)
           </button>
         </div>
       </div>
@@ -128,45 +156,46 @@ function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ventas por Categoría */}
-        <div className="card lg:col-span-2">
+        <div className="card lg:col-span-2 flex flex-col">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <PieChart size={20} />
             Ventas por Categoría
           </h3>
-          {loading ? (
-            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">Cargando datos...</p>
-            </div>
-          ) : data.ventas_por_categoria && data.ventas_por_categoria.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {data.ventas_por_categoria.map((cat, index) => {
-                const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500'];
-                const colorClass = colors[index % colors.length];
-                // Calculate max value for progress bar width
-                const maxVal = Math.max(...data.ventas_por_categoria.map(c => c.value));
-                const widthPercent = (cat.value / maxVal) * 100;
-
-                return (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg flex flex-col justify-center">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold text-gray-700">{cat.name}</span>
-                      <span className="font-bold text-gray-900">Bs {cat.value.toFixed(2)}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div className={`h-2.5 rounded-full ${colorClass}`} style={{ width: `${widthPercent}%` }}></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <PieChart size={48} className="text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">No hay ventas registradas</p>
+          <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 overflow-y-auto max-h-64 custom-scrollbar">
+            {loading ? (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-gray-500">Cargando datos...</p>
               </div>
-            </div>
-          )}
+            ) : data.ventas_por_categoria && data.ventas_por_categoria.length > 0 ? (
+              <div className="space-y-3">
+                {data.ventas_por_categoria.map((cat, index) => {
+                  const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-yellow-500', 'bg-pink-500', 'bg-indigo-500'];
+                  const colorClass = colors[index % colors.length];
+                  // Calculate max value for progress bar width
+                  const maxVal = Math.max(...data.ventas_por_categoria.map(c => c.value));
+                  const widthPercent = (cat.value / (maxVal || 1)) * 100;
+
+                  return (
+                    <div key={index} className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-sm border border-gray-100">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold text-gray-700">{cat.name}</span>
+                        <span className="font-bold text-gray-900">Bs {cat.value.toFixed(2)}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div className={`h-2.5 rounded-full ${colorClass}`} style={{ width: `${widthPercent}%` }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <PieChart size={48} className="text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-500 font-medium">No hay categorías registradas</p>
+                <p className="text-xs text-gray-400 mt-1">Crea categorías en la sección de inventario para ver las ventas agrupadas.</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Recent Orders */}
@@ -206,18 +235,17 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* Cajeros y Turnos */}
+      {/* Cajeros del Día */}
       <div className="card">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <Users size={20} />
-          Cajeros y Turnos del Día
+          Cajeros del Día
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b">
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Cajero</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Turno</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Ventas</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Pedidos</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Estado</th>
@@ -226,27 +254,22 @@ function AdminDashboard() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-4 text-gray-500 text-sm">Cargando cajeros...</td>
+                  <td colSpan="4" className="text-center py-4 text-gray-500 text-sm">Cargando cajeros...</td>
                 </tr>
               ) : data.cajeros_turnos.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-4 text-gray-500 text-sm">No hay ventas registradas.</td>
+                  <td colSpan="4" className="text-center py-4 text-gray-500 text-sm">Ningún cajero activo hoy.</td>
                 </tr>
               ) : (
                 data.cajeros_turnos.map((cajero, index) => (
                   <tr key={index} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-semibold uppercase">
                           {cajero.nombre.charAt(0)}
                         </div>
                         <span className="text-sm font-medium text-gray-800">{cajero.nombre}</span>
                       </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex items-center gap-1 text-sm`}>
-                        {cajero.turno === 'AM' ? '☀️' : (cajero.turno === 'PM' ? '🌙' : '')} {cajero.turno}
-                      </span>
                     </td>
                     <td className="py-3 px-4">
                       <span className="text-sm font-semibold text-gray-800">{cajero.ventas}</span>
@@ -256,8 +279,7 @@ function AdminDashboard() {
                     </td>
                     <td className="py-3 px-4">
                       <span className={`badge ${cajero.estado === 'activo' ? 'badge-success' :
-                          cajero.estado === 'pendiente' ? 'badge-warning' :
-                            'bg-gray-100 text-gray-600'
+                          'bg-gray-100 text-gray-600'
                         }`}>
                         {cajero.estado}
                       </span>
