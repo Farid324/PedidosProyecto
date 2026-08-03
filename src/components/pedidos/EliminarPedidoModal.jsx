@@ -8,8 +8,8 @@ export default function EliminarPedidoModal({ isOpen, onClose, onConfirm, isDele
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-red-50">
-          <div className="flex items-center gap-3 text-red-600">
+        <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-[var(--blancoFondo-primario)]">
+          <div className="flex items-center gap-3 text-[var(--guindo-primario)]">
             <AlertTriangle size={24} />
             <h2 className="text-xl font-bold">Eliminar Pedido</h2>
           </div>
@@ -42,7 +42,7 @@ export default function EliminarPedidoModal({ isOpen, onClose, onConfirm, isDele
           <button
             onClick={onConfirm}
             disabled={isDeleting}
-            className="flex-1 px-4 py-2.5 text-white bg-red-600 rounded-xl hover:bg-red-700 font-semibold transition-colors shadow-sm disabled:opacity-50 flex justify-center items-center gap-2"
+            className="flex-1 px-4 py-2.5 text-white bg-[var(--guindo-primario)] rounded-xl hover:opacity-90 font-semibold transition-opacity shadow-sm disabled:opacity-50 flex justify-center items-center gap-2"
           >
             {isDeleting ? 'Eliminando...' : 'Sí, Eliminar Pedido'}
           </button>

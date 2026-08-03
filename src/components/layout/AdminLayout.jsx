@@ -152,6 +152,13 @@ function AdminLayout() {
       badge: null 
     },
     { 
+      id: 'notificaciones', 
+      label: 'Notificaciones', 
+      icon: Bell, 
+      path: '/admin/notificaciones',
+      badge: null 
+    },
+    { 
       id: 'perfil', 
       label: 'Mi Perfil', 
       icon: User, 
@@ -213,7 +220,7 @@ function AdminLayout() {
         {/* Page Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[var(--blancoFondo-primario)]">
           <div className="container mx-auto px-4 py-8 bg-[var(--blancoFondo-primario)]">
-            <Outlet />
+            <Outlet context={{ notifications, setNotifications }} />
           </div>
         </main>
       </div>

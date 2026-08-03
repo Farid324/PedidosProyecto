@@ -47,7 +47,7 @@ export default function Navbar({
 
   const handleVerMas = () => {
     setNotifOpen(false);
-    navigate('/admin/reportes');
+    navigate('/admin/notificaciones');
   };
 
   return (
@@ -112,7 +112,7 @@ export default function Navbar({
                     onClick={handleVerMas}
                     className="w-full text-center py-2.5 bg-gray-50 hover:bg-gray-100 text-xs font-bold text-[var(--guindo-primario)] border-t border-gray-100 transition-colors"
                   >
-                    Ver todas en Reportes
+                    Ver más en Notificaciones
                   </button>
                 )}
               </div>

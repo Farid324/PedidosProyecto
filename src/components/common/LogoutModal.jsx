@@ -13,7 +13,7 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
         <div className="relative bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
           
           <div className="flex flex-col items-center p-6 text-center">
-            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-[var(--blancoFondo-primario)] text-[var(--guindo-primario)] rounded-full flex items-center justify-center mb-4 border border-[var(--guindo-primario)]/20">
               <LogOut size={32} />
             </div>
             
@@ -31,7 +31,7 @@ export default function LogoutModal({ isOpen, onClose, onConfirm }) {
               </button>
               <button
                 onClick={onConfirm}
-                className="flex-1 px-4 py-2.5 text-white bg-red-600 rounded-xl hover:bg-red-700 font-semibold transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 text-white bg-[var(--guindo-primario)] rounded-xl hover:opacity-90 font-semibold transition-opacity shadow-sm"
               >
                 Cerrar Sesión
               </button>
