@@ -1,9 +1,19 @@
 // src/components/pedidos/TableSelector.jsx
 import { useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupadas = [] }) {
-  const mesas = Array.from({ length: 20 }, (_, i) => ({
+  const [extraTables, setExtraTables] = useState(0)
+
+  const maxOccupied = mesasOcupadas.reduce((max, m) => {
+    const id = typeof m === 'object' ? m.id : m;
+    const num = Number(id);
+    return !isNaN(num) && num > max ? num : max;
+  }, 0);
+
+  const totalTables = Math.max(20 + extraTables, maxOccupied);
+
+  const mesas = Array.from({ length: totalTables }, (_, i) => ({
     id: i + 1,
     nombre: `Mesa ${i + 1}`
   }))
@@ -59,7 +69,7 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
 
   const getMesaClasses = (mesaId) => {
     const state = getMesaState(mesaId)
-    const base = 'min-w-[200px] h-20 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 transform'
+    const base = 'min-w-[120px] h-14 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 transform'
 
     switch (state) {
       case 'selected':
@@ -74,9 +84,9 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
   }
 
   return (
-    <div className='card bg-white p-4 rounded-xl shrink-0 shadow-sm border border-gray-100'>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-[var(--gris-primario)]">Seleccionar Mesa</h2>
+    <div className='card bg-white p-3 rounded-xl shrink-0 shadow-sm border border-gray-100'>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base font-bold text-[var(--gris-primario)]">Seleccionar Mesa</h2>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-gray-200 border border-gray-300"></span>
@@ -121,16 +131,25 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
               onClick={() => handleClick(mesa.id)}
               className={getMesaClasses(mesa.id)}
             >
-              <span className="text-xs uppercase font-bold tracking-wider">Mesa</span>
-              <span className="text-lg font-bold">{mesa.id}</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500 group-hover:text-inherit">Mesa</span>
+                <span className="text-base font-bold">{mesa.id}</span>
+              </div>
               {getMesaState(mesa.id) === 'occupied' && (
-                <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5">Ocupada</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider leading-none mt-0.5">Ocupada</span>
               )}
               {getMesaState(mesa.id) === 'pending' && (
-                <span className="text-[10px] font-bold uppercase tracking-wider mt-0.5 text-red-600">Pendiente</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 leading-none mt-0.5">Pendiente</span>
               )}
             </div>
           ))}
+          <div
+            onClick={() => { if (!isDragging) setExtraTables(prev => prev + 1) }}
+            className="min-w-[120px] h-14 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center transition-all duration-200 hover:border-[var(--guindo-primario)] hover:bg-gray-50 cursor-pointer text-gray-400 hover:text-[var(--guindo-primario)] shrink-0"
+          >
+            <Plus size={20} />
+            <span className="text-[10px] uppercase font-bold tracking-wider mt-0.5">Agregar Mesa</span>
+          </div>
         </div>
 
         <button

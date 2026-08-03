@@ -21,6 +21,7 @@ function AdminDashboard() {
   })
   const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0])
   const [loading, setLoading] = useState(true)
+  const [isPedidosExpanded, setIsPedidosExpanded] = useState(false)
 
   useEffect(() => {
     fetchDashboardData()
@@ -180,24 +181,36 @@ function AdminDashboard() {
             ) : data.pedidos_recientes.length === 0 ? (
               <p className="text-gray-500 text-sm text-center py-4">No hay pedidos recientes.</p>
             ) : (
-              data.pedidos_recientes.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-800 text-sm">#{order.id}</p>
-                    <p className="text-gray-600 text-xs">{order.cliente}</p>
-                  </div>
-                  <div className="text-right mx-3">
-                    <p className="font-semibold text-gray-800 text-sm">{order.total}</p>
-                    <p className="text-xs text-gray-500">{order.hora}</p>
-                  </div>
-                  <span className={`badge ${order.estado === 'completado' ? 'badge-success' :
-                      order.estado === 'en_proceso' ? 'badge-warning' :
-                        'badge-danger'
-                    }`}>
-                    {order.estado.replace('_', ' ')}
-                  </span>
-                </div>
-              ))
+              <>
+                {data.pedidos_recientes
+                  .slice(0, isPedidosExpanded ? data.pedidos_recientes.length : 3)
+                  .map((order) => (
+                    <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer border border-gray-100">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800 text-sm">#{order.id}</p>
+                        <p className="text-gray-600 text-xs">{order.cliente}</p>
+                      </div>
+                      <div className="text-right mx-3">
+                        <p className="font-semibold text-gray-800 text-sm">{order.total}</p>
+                        <p className="text-xs text-gray-500">{order.hora}</p>
+                      </div>
+                      <span className={`badge ${order.estado === 'completado' ? 'badge-success' :
+                          order.estado === 'en_proceso' ? 'badge-warning' :
+                            'badge-danger'
+                        }`}>
+                        {order.estado.replace('_', ' ')}
+                      </span>
+                    </div>
+                  ))}
+                {data.pedidos_recientes.length > 3 && (
+                  <button
+                    onClick={() => setIsPedidosExpanded(!isPedidosExpanded)}
+                    className="w-full mt-2 py-2 text-sm font-semibold text-[var(--azul-primario)] hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                  >
+                    {isPedidosExpanded ? 'Ver menos' : `Ver ${data.pedidos_recientes.length - 3} pedidos más`}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>

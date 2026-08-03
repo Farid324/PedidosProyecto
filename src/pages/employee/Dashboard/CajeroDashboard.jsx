@@ -1,79 +1,106 @@
-// src/pages/employee/Dashboard/CajeroDashboard.jsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   ShoppingCart, DollarSign, Clock, Users, 
-  TrendingUp, FileText, Coffee, UtensilsCrossed
+  TrendingUp, FileText, UtensilsCrossed, Receipt
 } from 'lucide-react'
 import useAuthStore from '../../../store/authStore'
+import pedidoService from '../../../services/pedidoService'
+import menuService from '../../../services/menuService'
 
 function CajeroDashboard() {
   const { user, turno } = useAuthStore()
-  const [activeTab, setActiveTab] = useState('resumen')
+  const navigate = useNavigate()
+  
+  const [pedidos, setPedidos] = useState([])
+  const [productos, setProductos] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Datos de ejemplo para el cajero
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch today's orders
+        const today = new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
+        const resPedidos = await pedidoService.getPedidos({ fecha: today })
+        
+        // Fetch products for popular menu
+        const resProductos = await menuService.getProductos()
+        
+        setPedidos(resPedidos.data || [])
+        setProductos(Array.isArray(resProductos) ? resProductos : (resProductos.data || []))
+      } catch (error) {
+        console.error("Error fetching dashboard data", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  // Calculate stats
+  const pedidosCompletados = pedidos.filter(p => p.estado === 'completado')
+  const ventasHoy = pedidosCompletados.reduce((acc, curr) => acc + Number(curr.total), 0)
+  const clientesAtendidos = pedidos.length // Total orders today
+
   const statsCards = [
     { 
       title: 'Mis Ventas Hoy', 
-      value: 'Bs 1,250', 
-      change: '15 pedidos', 
+      value: `Bs ${ventasHoy.toFixed(2)}`, 
+      change: `${pedidosCompletados.length} cobrados`, 
       icon: DollarSign, 
       color: 'green'
     },
     { 
-      title: 'Pedidos Activos', 
-      value: '3', 
-      change: 'En proceso', 
+      title: 'Pedidos Completados', 
+      value: pedidosCompletados.length.toString(), 
+      change: 'Hoy', 
       icon: ShoppingCart, 
       color: 'blue'
     },
     { 
-      title: 'Tiempo Promedio', 
-      value: '12 min', 
-      change: 'Por pedido', 
-      icon: Clock, 
-      color: 'purple'
-    },
-    { 
       title: 'Clientes Atendidos', 
-      value: '28', 
+      value: clientesAtendidos.toString(), 
       change: `Turno ${turno}`, 
       icon: Users, 
       color: 'yellow'
     },
   ]
 
-  const pedidosRecientes = [
-    { id: '001', mesa: '5', total: 'Bs 125', estado: 'completado', hora: '14:30' },
-    { id: '002', mesa: '2', total: 'Bs 89', estado: 'en_proceso', hora: '14:25' },
-    { id: '003', mesa: '8', total: 'Bs 156', estado: 'pendiente', hora: '14:20' },
-  ]
+  // Recent orders (top 5)
+  const pedidosRecientes = pedidos.slice(0, 5)
 
-  const menuRapido = [
-    { nombre: 'Café Americano', precio: 'Bs 12', categoria: 'Bebidas', icon: Coffee },
-    { nombre: 'Hamburguesa Clásica', precio: 'Bs 45', categoria: 'Platos', icon: UtensilsCrossed },
-    { nombre: 'Pizza Margherita', precio: 'Bs 65', categoria: 'Platos', icon: UtensilsCrossed },
-    { nombre: 'Limonada', precio: 'Bs 8', categoria: 'Bebidas', icon: Coffee },
-  ]
+  // Popular products (random 4 for now, since we don't have exact order counts per product easily available here)
+  const menuRapido = productos.filter(p => p.disponible).slice(0, 4).map(p => ({
+    nombre: p.nombre,
+    precio: `Bs ${Number(p.precio).toFixed(2)}`,
+    categoria: p.Categoria?.nombre || 'Platos',
+    icon: UtensilsCrossed
+  }))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar p-1">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-[var(--gris-primario)]">Dashboard Pedidos</h1>
-          <p className="text-[var(--gris-primario)] mt-1">Gestion de administracion de pedidos</p>
+          <p className="text-[var(--gris-primario)] mt-1">Gestión de administración de pedidos</p>
         </div>
         <div className="flex gap-3">
-          <button className="bg-[var(--azul-primario)] text-white font-bold p-2 hover:bg-[var(--primary-color)] rounded-md flex items-center gap-2">
+          <button 
+            onClick={() => navigate('/cajero/reportes')}
+            className="bg-[var(--azul-primario)] text-white font-bold p-2 hover:bg-[var(--primary-color)] rounded-md flex items-center gap-2"
+          >
             <FileText size={20} />
             Generar Reporte
           </button>
         </div>
       </div>
+      
       {/* Header con información del cajero */}
       <div className="card bg-[var(--azul-primario)] rounded-lg p-6 text-white">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold">Bienvenido, {user?.name}</h1>
+            <h1 className="text-2xl font-bold">Bienvenido, {user?.nombre || user?.name}</h1>
             <p className="text-blue-100 mt-1">
               Turno {turno} • {new Date().toLocaleDateString('es-BO', { 
                 weekday: 'long', 
@@ -96,12 +123,12 @@ function CajeroDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {statsCards.map((stat, index) => (
           <div key={index} className="card hover:shadow-lg transition">
             <div className="flex items-center justify-between mb-4">
-              <div className={`bg-${stat.color}-100 p-3 rounded-lg`}>
-                <stat.icon className={`text-${stat.color}-600`} size={24} />
+              <div className={`bg-${stat.color}-100 p-3 rounded-lg text-${stat.color}-600`}>
+                <stat.icon size={24} />
               </div>
               <span className="text-sm text-[var(--gris-primario)]">
                 {stat.change}
@@ -118,20 +145,16 @@ function CajeroDashboard() {
         <div className="card lg:col-span-1">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Acciones Rápidas</h3>
           <div className="space-y-2">
-            <button className="btn btn-primary w-full justify-start">
+            <button onClick={() => navigate('/cajero/pedidos')} className="btn btn-primary w-full justify-start border-none">
               <ShoppingCart size={20} className="mr-2" />
               Nuevo Pedido
             </button>
-            <button className="btn btn-secondary w-full justify-start">
-              <FileText size={20} className="mr-2" />
-              Ver Facturas Pendientes
+            <button onClick={() => navigate('/cajero/facturacion')} className="btn btn-secondary w-full justify-start border-none text-[var(--gris-primario)]">
+              <Receipt size={20} className="mr-2 text-gray-500" />
+              Ver Pedidos
             </button>
-            <button className="btn btn-secondary w-full justify-start">
-              <DollarSign size={20} className="mr-2" />
-              Registrar Cobro
-            </button>
-            <button className="btn btn-secondary w-full justify-start">
-              <TrendingUp size={20} className="mr-2" />
+            <button onClick={() => navigate('/cajero/reportes')} className="btn btn-secondary w-full justify-start border-none text-[var(--gris-primario)]">
+              <TrendingUp size={20} className="mr-2 text-gray-500" />
               Mi Reporte del Día
             </button>
           </div>
@@ -140,54 +163,66 @@ function CajeroDashboard() {
         {/* Pedidos Recientes */}
         <div className="card lg:col-span-2">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Mis Pedidos Recientes</h3>
-          <div className="space-y-3">
-            {pedidosRecientes.map((pedido) => (
-              <div key={pedido.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <p className="font-semibold text-gray-800">Pedido #{pedido.id}</p>
-                    <p className="text-sm text-gray-600">Mesa {pedido.mesa}</p>
+          <div className="space-y-3 max-h-[250px] overflow-y-auto custom-scrollbar pr-2">
+            {loading ? (
+              <p className="text-gray-500 text-center py-4">Cargando pedidos...</p>
+            ) : pedidosRecientes.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">Aún no hay pedidos hoy.</p>
+            ) : (
+              pedidosRecientes.map((pedido) => (
+                <div key={pedido.id} onClick={() => navigate('/cajero/facturacion')} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer border border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <p className="font-semibold text-gray-800">Pedido #{pedido.numero_diario || pedido.id}</p>
+                      <p className="text-sm text-gray-600">Mesa {pedido.mesa || '-'}</p>
+                    </div>
                   </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-[var(--azul-primario)]">Bs {Number(pedido.total).toFixed(2)}</p>
+                    <p className="text-xs text-gray-500">{new Date(pedido.created_at).toLocaleTimeString()}</p>
+                  </div>
+                  <span className={`badge ${
+                    pedido.estado === 'completado' ? 'badge-success' :
+                    pedido.estado === 'en_proceso' ? 'badge-warning' :
+                    'badge-danger'
+                  }`}>
+                    {pedido.estado === 'completado' ? 'Finalizado' : pedido.estado === 'pendiente' ? 'Registrado' : pedido.estado}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-gray-800">{pedido.total}</p>
-                  <p className="text-xs text-gray-500">{pedido.hora}</p>
-                </div>
-                <span className={`badge ${
-                  pedido.estado === 'completado' ? 'badge-success' :
-                  pedido.estado === 'en_proceso' ? 'badge-warning' :
-                  'badge-danger'
-                }`}>
-                  {pedido.estado.replace('_', ' ')}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
 
       {/* Menú Rápido */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Menú Rápido - Productos Populares</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Menú Rápido - Productos Disponibles</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {menuRapido.map((item, index) => {
-            const Icon = item.icon
-            return (
-              <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer hover:border-blue-300">
-                <div className="flex items-center justify-between mb-2">
-                  <Icon size={24} className="text-gray-600" />
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">{item.categoria}</span>
+          {loading ? (
+             <p className="text-gray-500 col-span-4 text-center py-4">Cargando productos...</p>
+          ) : menuRapido.length === 0 ? (
+            <p className="text-gray-500 col-span-4 text-center py-4">No hay productos disponibles.</p>
+          ) : (
+            menuRapido.map((item, index) => {
+              const Icon = item.icon
+              return (
+                <div key={index} onClick={() => navigate('/cajero/pedidos')} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer hover:border-[var(--guindo-primario)]">
+                  <div className="flex items-center justify-between mb-2">
+                    <Icon size={24} className="text-gray-400" />
+                    <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 font-medium">{item.categoria}</span>
+                  </div>
+                  <p className="font-semibold text-gray-800 text-sm line-clamp-1">{item.nombre}</p>
+                  <p className="text-[var(--azul-primario)] font-bold mt-1">{item.precio}</p>
                 </div>
-                <p className="font-semibold text-gray-800 text-sm">{item.nombre}</p>
-                <p className="text-blue-600 font-bold mt-1">{item.precio}</p>
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </div>
       </div>
 
       {/* Información del Turno */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-blue-800 font-semibold">Información del Turno</p>

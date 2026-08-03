@@ -38,20 +38,22 @@ export default function OrderSummary({
           <div className="flex-1">
             <input 
               type="text" 
-              placeholder="Razón Social *" 
+              placeholder="Razón Social (Opcional)" 
               className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)] ${validationError ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
               value={clienteInfo.razonSocial}
               onChange={(e) => setClienteInfo({...clienteInfo, razonSocial: e.target.value})}
             />
             {validationError && <p className="text-xs text-red-500 mt-0.5">Obligatorio</p>}
           </div>
-          <input 
-            type="text" 
-            placeholder="NIT / CI (Opcional)" 
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)]"
-            value={clienteInfo.nit}
-            onChange={(e) => setClienteInfo({...clienteInfo, nit: e.target.value})}
-          />
+          <div className="flex-1">
+            <input 
+              type="text" 
+              placeholder="NIT / CI (Opcional)" 
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)]"
+              value={clienteInfo.nit}
+              onChange={(e) => setClienteInfo({...clienteInfo, nit: e.target.value})}
+            />
+          </div>
         </div>
 
         <div className="flex gap-2 mt-2">
