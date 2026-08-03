@@ -4,8 +4,10 @@ export default function DetallePedidoModal({ isOpen, onClose, pedido }) {
   if (!isOpen || !pedido) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="relative bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-[var(--blancoFondo-primario)] shrink-0">
@@ -112,6 +114,7 @@ export default function DetallePedidoModal({ isOpen, onClose, pedido }) {
           </span>
         </div>
         
+      </div>
       </div>
     </div>
   )

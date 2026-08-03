@@ -9,6 +9,7 @@ import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
+import LogoutModal from '../common/LogoutModal'
 
 // Sintetizador de audio para la notificación
 const playNotificationSound = () => {
@@ -41,6 +42,7 @@ function AdminLayout() {
   const location = useLocation()
   const { user, logout } = useAuthStore()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const [notifications, setNotifications] = useState(() => {
     try {
       const saved = localStorage.getItem('admin_notifications')
@@ -110,7 +112,12 @@ function AdminLayout() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true)
+  }
+
+  const handleConfirmLogout = () => {
+    setIsLogoutModalOpen(false)
     logout()
     navigate('/login')
   }
@@ -174,7 +181,7 @@ function AdminLayout() {
     {
       label: 'Cerrar Sesión',
       icon: LogOut,
-      onClick: handleLogout,
+      onClick: handleLogoutClick,
       className: 'text-red-600 hover:bg-red-50'
     }
   ]
@@ -189,7 +196,7 @@ function AdminLayout() {
         currentPath={location.pathname}
         onNavigate={(path) => navigate(path)}
         userRole="admin"
-        onLogout={handleLogout}
+        onLogout={handleLogoutClick}
       />
 
       {/* Main Content */}
@@ -210,6 +217,13 @@ function AdminLayout() {
           </div>
         </main>
       </div>
+
+      {/* Modal de Cerrar Sesión */}
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+      />
     </div>
   )
 }

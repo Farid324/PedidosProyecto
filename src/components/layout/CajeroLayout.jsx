@@ -8,6 +8,7 @@ import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
+import LogoutModal from '../common/LogoutModal'
 
 // Sintetizador de audio para la notificación
 const playNotificationSound = () => {
@@ -40,6 +41,7 @@ function CajeroLayout() {
   const location = useLocation()
   const { user, turno, logout, cambiarTurno } = useAuthStore()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   
   const [notifications, setNotifications] = useState(() => {
     try {
@@ -186,7 +188,12 @@ function CajeroLayout() {
     return () => clearInterval(clockInterval);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true)
+  }
+
+  const handleConfirmLogout = () => {
+    setIsLogoutModalOpen(false)
     logout()
     navigate('/login')
   }
@@ -314,7 +321,7 @@ function CajeroLayout() {
     {
       label: 'Cerrar Turno',
       icon: LogOut,
-      onClick: handleLogout,
+      onClick: handleLogoutClick,
       className: 'text-red-600 hover:bg-red-50'
     }
   ]
@@ -329,7 +336,7 @@ function CajeroLayout() {
         currentPath={location.pathname}
         onNavigate={(path) => navigate(path)}
         userRole="cajero"
-        onLogout={handleLogout}
+        onLogout={handleLogoutClick}
       />
 
       {/* Main Content */}
@@ -352,6 +359,12 @@ function CajeroLayout() {
           </div>
         </main>
       </div>
+
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+      />
     </div>
   )
 }

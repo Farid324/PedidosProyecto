@@ -4,8 +4,10 @@ export default function EliminarPedidoModal({ isOpen, onClose, onConfirm, isDele
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-red-50">
           <div className="flex items-center gap-3 text-red-600">
             <AlertTriangle size={24} />
@@ -44,6 +46,7 @@ export default function EliminarPedidoModal({ isOpen, onClose, onConfirm, isDele
           >
             {isDeleting ? 'Eliminando...' : 'Sí, Eliminar Pedido'}
           </button>
+        </div>
         </div>
       </div>
     </div>
