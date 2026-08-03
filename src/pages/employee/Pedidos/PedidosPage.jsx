@@ -52,7 +52,7 @@ function PedidosPage() {
           menuService.getCategorias(),
           menuService.getProductos()
         ])
-        
+
         const catsData = Array.isArray(catsRes) ? catsRes : (catsRes.data || [])
         setCategorias(catsData)
         if (catsData.length > 0) setSelectedCategoria(catsData[0].id)
@@ -97,7 +97,7 @@ function PedidosPage() {
   const handleSelectMesa = async (mesaId) => {
     setSelectedMesa(mesaId)
     setPagoQR(false)
-    
+
     try {
       const res = await pedidoService.getPedidoByMesa(mesaId)
       if (res.data) {
@@ -247,7 +247,7 @@ function PedidosPage() {
     try {
       const metodo = pagoQR ? 'QR' : 'EFECTIVO'
       await pedidoService.finalizarPedido(pedidoActivo.id, metodo)
-      
+
       // Limpiar todo
       setPedidoActivo(null)
       setCarrito({})
@@ -256,7 +256,7 @@ function PedidosPage() {
       setPagoQR(false)
       setSelectedMesa(null)
       await fetchMesasOcupadas()
-      
+
       // Mostrar toast
       showToast('Pedido finalizado. Mesa liberada', 'success')
     } catch (error) {
@@ -340,7 +340,7 @@ function PedidosPage() {
         <div class="divider"></div>
         <div>
     `;
-    
+
     items.forEach(item => {
       html += `<div class="item-row"><div class="qty">${item.cantidad} x</div><div class="desc">${item.nombre}</div></div>`;
     });
@@ -485,7 +485,7 @@ function PedidosPage() {
         </div>
       `;
     })
-    
+
     html += `
         <div class="divider"></div>
         <div class="total-row">
@@ -514,8 +514,8 @@ function PedidosPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] gap-4 overflow-hidden p-1"> 
-      
+    <div className="flex flex-col h-[calc(100vh-6rem)] gap-4 overflow-hidden p-1">
+
       {/* Encabezado */}
       <div className="flex justify-between items-center shrink-0">
         <div>
@@ -534,16 +534,16 @@ function PedidosPage() {
 
       {/* Contenedor Principal */}
       <div className='flex flex-col lg:flex-row gap-4 flex-1 min-h-0'>
-        
+
         {/* Columna Izquierda: Mesas y Menú */}
         <div className="flex flex-col gap-4 flex-1 min-w-0 min-h-0">
-          <TableSelector 
-            selectedMesa={selectedMesa} 
+          <TableSelector
+            selectedMesa={selectedMesa}
             onSelectMesa={handleSelectMesa}
             mesasOcupadas={mesasOcupadas}
           />
-          
-          <MenuSection 
+
+          <MenuSection
             categorias={categorias}
             productos={productos}
             carrito={carrito}
@@ -557,7 +557,7 @@ function PedidosPage() {
         </div>
 
         {/* Derecha: Orden Actual */}
-        <OrderSummary 
+        <OrderSummary
           selectedMesa={selectedMesa}
           carrito={carrito}
           clienteInfo={clienteInfo}
@@ -621,9 +621,8 @@ function PedidosPage() {
       {/* Toast Notification */}
       {toast.visible && (
         <div className="fixed top-4 right-4 z-[9999] animate-bounce">
-          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 backdrop-blur-md text-white font-semibold ${
-            toast.type === 'success' ? 'bg-green-600/95' : 'bg-red-600/95'
-          }`}>
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 backdrop-blur-md text-white font-semibold ${toast.type === 'success' ? 'bg-green-600/95' : 'bg-red-600/95'
+            }`}>
             {toast.type === 'success' ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
