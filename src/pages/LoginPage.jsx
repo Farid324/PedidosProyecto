@@ -194,7 +194,14 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showCajeroPassword, setShowCajeroPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [turnoAlert, setTurnoAlert] = useState('')
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' })
+
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type })
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, visible: false }))
+    }, 3000)
+  }
 
   // Horarios de turno configurados por el admin
   const [shiftConfig, setShiftConfig] = useState({
@@ -272,7 +279,7 @@ function LoginPage() {
   const switchRole = (role) => {
     setActiveRole(role)
     clearError()
-    setTurnoAlert('')
+    setToast({ visible: false, message: '', type: 'success' })
     if (role === 'ADMIN') setAdminForm({ email: '', password: '' })
     if (role === 'CAJERO') setCajeroForm({ nombre: '', password: '', turno: '' })
     setShowPassword(false)
@@ -280,19 +287,19 @@ function LoginPage() {
   }
 
   const handleSelectTurno = (turno) => {
-    setTurnoAlert('')
+    setToast({ visible: false, message: '', type: 'success' })
     if (turno === 'AM' && !isMorningAvailable) {
       const horario = shiftConfig.turno_manana_ingreso && shiftConfig.turno_manana_salida 
         ? ` (${shiftConfig.turno_manana_ingreso} - ${shiftConfig.turno_manana_salida})`
         : ''
-      setTurnoAlert(`No puedes ingresar al turno Mañana. Está fuera del horario configurado${horario}.`)
+      showToast(`No puedes ingresar al turno Mañana. Está fuera del horario configurado${horario}.`, 'error')
       return
     }
     if (turno === 'PM' && !isAfternoonAvailable) {
       const horario = shiftConfig.turno_tarde_ingreso && shiftConfig.turno_tarde_salida
         ? ` (${shiftConfig.turno_tarde_ingreso} - ${shiftConfig.turno_tarde_salida})`
         : ''
-      setTurnoAlert(`No puedes ingresar al turno Tarde. Está fuera del horario configurado${horario}.`)
+      showToast(`No puedes ingresar al turno Tarde. Está fuera del horario configurado${horario}.`, 'error')
       return
     }
     setCajeroForm({ ...cajeroForm, turno })
@@ -529,11 +536,6 @@ function LoginPage() {
                 </div>
               </div>
 
-              {turnoAlert && (
-                <div className="bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg text-sm text-center">
-                  ⚠️ {turnoAlert}
-                </div>
-              )}
 
               {loginError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center">
@@ -556,6 +558,26 @@ function LoginPage() {
 
         <p className="text-gray-500 text-xs mt-6">© 2025 Restaurant POS - v1.0.0</p>
       </div>
+      
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className="fixed top-4 right-4 z-[9999] animate-bounce">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 backdrop-blur-md text-white font-semibold ${
+            toast.type === 'success' ? 'bg-green-600/95' : 'bg-red-600/95'
+          }`}>
+            {toast.type === 'success' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            {toast.message}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

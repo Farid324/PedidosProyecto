@@ -1,5 +1,5 @@
 // server/controllers/authController.js
-const { Usuario, AccesoCajero } = require('../models');
+const { Usuario, AccesoCajero, Pedido } = require('../models');
 const { sequelize } = require('../config/database');
 const { Op } = require('sequelize');
 const jwt = require('jsonwebtoken');
@@ -156,7 +156,21 @@ const loginCajero = async (req, res) => {
 // Logout de Cajero (registrar salida)
 const logoutCajero = async (req, res) => {
   try {
-    const { acceso_id } = req.user;
+    const { acceso_id, nombre, turno } = req.user;
+
+    // Finalizar pedidos activos del turno actual del cajero antes de salir
+    if (nombre && turno) {
+      await Pedido.update(
+        { estado: 'finalizado' },
+        { 
+          where: { 
+            cajero_nombre: nombre,
+            turno: turno,
+            estado: { [Op.in]: ['pendiente', 'en_proceso'] } 
+          } 
+        }
+      );
+    }
 
     if (acceso_id) {
       await AccesoCajero.update(
@@ -195,6 +209,21 @@ const cambiarTurno = async (req, res) => {
     if (turno === nuevoTurno) {
       await t.rollback();
       return res.status(400).json({ success: false, error: 'Ya estás en ese turno' });
+    }
+
+    // 0. Finalizar mesas actuales del turno anterior antes de cambiar
+    if (nombre && turno) {
+      await Pedido.update(
+        { estado: 'finalizado' },
+        { 
+          where: { 
+            cajero_nombre: nombre,
+            turno: turno,
+            estado: { [Op.in]: ['pendiente', 'en_proceso'] } 
+          },
+          transaction: t
+        }
+      );
     }
 
     // 1. Cerrar el acceso anterior

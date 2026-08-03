@@ -200,6 +200,7 @@ function ReportesPage() {
               <tr>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Nro Pedido</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Fecha de Emisión</th>
+                <th className="py-3 px-4 font-semibold whitespace-nowrap">Tipo</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Razón Social</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">NIT</th>
                 <th className="py-3 px-4 font-semibold whitespace-nowrap">Monto Total</th>
@@ -209,17 +210,24 @@ function ReportesPage() {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-gray-500">Cargando datos...</td>
+                  <td colSpan="7" className="py-8 text-center text-gray-500">Cargando datos...</td>
                 </tr>
               ) : filteredVentas.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-gray-500">No se encontraron ventas para esta fecha.</td>
+                  <td colSpan="7" className="py-8 text-center text-gray-500">No se encontraron ventas para esta fecha.</td>
                 </tr>
               ) : (
                 filteredVentas.map((v) => (
                   <tr key={v.id} className="hover:bg-gray-50/50 transition">
                     <td className="py-3 px-4 font-medium text-gray-800 whitespace-nowrap">#{v.numero_pedido}</td>
                     <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">{new Date(v.fecha_emision).toLocaleString('es-BO')}</td>
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold ${
+                        v.tipo_pedido === 'llevar' ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
+                      }`}>
+                        {v.tipo_pedido === 'llevar' ? 'Para Llevar' : 'Para Mesa'}
+                      </span>
+                    </td>
                     <td className="py-3 px-4 text-sm text-gray-800 whitespace-nowrap">{v.razon_social}</td>
                     <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">{v.nit || 'S/N'}</td>
                     <td className="py-3 px-4 font-semibold text-gray-800 whitespace-nowrap">Bs {Number(v.monto_total).toFixed(2)}</td>

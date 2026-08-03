@@ -15,7 +15,7 @@ const getMiReporteDiario = async (req, res) => {
     const start = startOfDay(targetDate);
     const end = endOfDay(targetDate);
 
-    const facturas = await Factura.findAll({
+    let facturas = await Factura.findAll({
       where: { 
         cajero_nombre: nombre, 
         estado: 'pagada', 
@@ -24,11 +24,19 @@ const getMiReporteDiario = async (req, res) => {
       include: [
         {
           model: Pedido,
-          attributes: ['turno', 'id']
+          attributes: ['turno', 'id', 'tipo_pedido']
         }
       ],
       order: [['fecha_emision','DESC']]
     });
+
+    // Filtrar estricamente por el turno actual del cajero (Aislamiento de turno)
+    if (req.user.turno) {
+      facturas = facturas.filter(f => {
+        const turnoPedido = f.Pedido ? f.Pedido.turno : null;
+        return turnoPedido === req.user.turno;
+      });
+    }
 
     let total = 0;
     let total_qr = 0;
@@ -55,7 +63,8 @@ const getMiReporteDiario = async (req, res) => {
         monto_total: monto,
         metodo_pago: f.metodo_pago,
         cajero_nombre: f.cajero_nombre,
-        turno: turno
+        turno: turno,
+        tipo_pedido: f.Pedido ? f.Pedido.tipo_pedido : 'mesa'
       };
     });
 

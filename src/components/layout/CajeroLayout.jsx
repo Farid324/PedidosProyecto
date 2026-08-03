@@ -40,6 +40,14 @@ function CajeroLayout() {
   const location = useLocation()
   const { user, turno, logout, cambiarTurno } = useAuthStore()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' })
+
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type })
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, visible: false }))
+    }, 3000)
+  }
   
   const [notifications, setNotifications] = useState(() => {
     try {
@@ -224,7 +232,7 @@ function CajeroLayout() {
     }
 
     if (!puedeCambiar) {
-      alert(mensajeError); 
+      showToast(mensajeError, 'error'); 
       return;
     }
 
@@ -241,7 +249,7 @@ function CajeroLayout() {
           ...prev
         ]);
       } else {
-        alert(res.error || 'Error al cambiar turno');
+        showToast(res.error || 'Error al cambiar turno', 'error');
       }
     }
   }
@@ -352,6 +360,26 @@ function CajeroLayout() {
           </div>
         </main>
       </div>
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className="fixed top-4 right-4 z-[9999] animate-bounce">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 backdrop-blur-md text-white font-semibold ${
+            toast.type === 'success' ? 'bg-green-600/95' : 'bg-red-600/95'
+          }`}>
+            {toast.type === 'success' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            {toast.message}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -24,6 +24,9 @@ const getPedidos = async (req, res) => {
 
     if (req.user.rol === 'cajero') {
       where.cajero_nombre = req.user.nombre;
+      if (req.user.turno) {
+        where.turno = req.user.turno;
+      }
     }
 
     const pedidos = await Pedido.findAll({
@@ -66,11 +69,18 @@ const getPedidoByMesa = async (req, res) => {
   try {
     const { mesa } = req.params;
 
+    const whereClause = {
+      mesa: parseInt(mesa),
+      estado: { [Op.in]: ['pendiente', 'en_proceso'] }
+    };
+
+    if (req.user && req.user.rol === 'cajero' && req.user.turno) {
+      whereClause.turno = req.user.turno;
+      whereClause.cajero_nombre = req.user.nombre;
+    }
+
     const pedido = await Pedido.findOne({
-      where: {
-        mesa: parseInt(mesa),
-        estado: { [Op.in]: ['pendiente', 'en_proceso'] }
-      },
+      where: whereClause,
       include: [{ model: DetallePedido, include: [{ model: Producto }] }],
       order: [['created_at', 'DESC']]
     });
@@ -85,8 +95,15 @@ const getPedidoByMesa = async (req, res) => {
 // Obtener mesas ocupadas
 const getMesasOcupadas = async (req, res) => {
   try {
+    const whereClause = { estado: { [Op.in]: ['pendiente', 'en_proceso'] } };
+    
+    if (req.user && req.user.rol === 'cajero' && req.user.turno) {
+      whereClause.turno = req.user.turno;
+      whereClause.cajero_nombre = req.user.nombre;
+    }
+
     const pedidosActivos = await Pedido.findAll({
-      where: { estado: { [Op.in]: ['pendiente', 'en_proceso'] } },
+      where: whereClause,
       attributes: ['mesa', 'created_at']
     });
 
