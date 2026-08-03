@@ -313,25 +313,26 @@ function PedidosPage() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Comanda - Atavismo</title>
+        <title>Comanda - Ca valluna</title>
         <style>
           @page { margin: 0; }
-          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 15px; width: 300px; color: #000; }
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 10px; width: 280px; color: #000; }
           .text-center { text-align: center; }
           .font-bold { font-weight: bold; }
-          .title { font-size: 22px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; }
-          .info { font-size: 16px; margin-bottom: 15px; }
-          .divider { border-top: 2px dashed #000; margin: 10px 0; }
-          .item-row { font-size: 16px; margin-bottom: 8px; font-weight: bold; display: flex; }
+          .title { font-size: 16px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 5px; }
+          .info { font-size: 12px; margin-bottom: 10px; }
+          .divider { border-top: 1px dashed #000; margin: 5px 0; }
+          .item-row { font-size: 12px; margin-bottom: 5px; font-weight: bold; display: flex; }
           .qty { width: 35px; }
           .desc { flex: 1; }
-          .obs { font-size: 14px; margin-top: 15px; border: 1px solid #000; padding: 5px; font-weight: bold; }
+          .obs { font-size: 11px; margin-top: 10px; border: 1px solid #000; padding: 5px; font-weight: bold; }
         </style>
       </head>
       <body>
         <div class="text-center title">COMANDA DE COCINA</div>
         <div class="info">
           <div><strong>PEDIDO NRO:</strong> ${pedidoActivo ? (pedidoActivo.numero_diario || pedidoActivo.id) : '--'}</div>
+          <div><strong>TIPO:</strong> ${tipoPedido === 'llevar' ? 'PARA LLEVAR' : 'PARA INTERNO'}</div>
           <div><strong>MESA:</strong> ${selectedMesa || '--'}</div>
           <div><strong>FECHA:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
         </div>
@@ -350,7 +351,7 @@ function PedidosPage() {
     
     html += `
         <div class="divider"></div>
-        <div class="text-center" style="font-size: 12px; margin-top: 10px;">Atavismo Catering</div>
+        <div class="text-center" style="font-size: 10px; margin-top: 5px;">Ca valluna</div>
         <script>
           window.onload = function() { 
             setTimeout(function() { window.print(); window.close(); }, 200);
@@ -426,35 +427,35 @@ function PedidosPage() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Factura - Atavismo</title>
+        <title>Factura - Ca valluna</title>
         <style>
           @page { margin: 0; }
-          body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 15px; width: 300px; color: #000; }
+          body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 10px; width: 280px; color: #000; }
           .text-center { text-align: center; }
           .text-right { text-align: right; }
           .font-bold { font-weight: bold; }
-          .header { margin-bottom: 15px; }
-          .brand { font-size: 26px; font-weight: bold; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-bottom: 2px;}
-          .sub-brand { font-size: 13px; margin-bottom: 10px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: 1px;}
-          .info-block { font-size: 13px; margin-bottom: 15px; line-height: 1.4; }
-          .divider { border-top: 1px dashed #000; margin: 10px 0; }
-          .item-row { display: flex; font-size: 13px; margin-bottom: 5px; }
-          .item-qty { width: 30px; }
+          .header { margin-bottom: 10px; }
+          .brand { font-size: 20px; font-weight: bold; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-bottom: 2px;}
+          .sub-brand { font-size: 11px; margin-bottom: 5px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: 1px;}
+          .info-block { font-size: 11px; margin-bottom: 10px; line-height: 1.3; }
+          .divider { border-top: 1px dashed #000; margin: 5px 0; }
+          .item-row { display: flex; font-size: 11px; margin-bottom: 3px; }
+          .item-qty { width: 25px; }
           .item-name { flex: 1; padding-right: 5px; }
-          .item-price { width: 65px; text-align: right; }
-          .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; margin-top: 10px; }
-          .footer { text-align: center; font-size: 12px; margin-top: 20px; line-height: 1.4; }
+          .item-price { width: 55px; text-align: right; }
+          .total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-top: 5px; }
+          .footer { text-align: center; font-size: 10px; margin-top: 10px; line-height: 1.3; }
         </style>
       </head>
       <body>
         <div class="text-center header">
-          <div class="brand">ATAVISMO</div>
-          <div class="sub-brand">CATERING & EVENTOS</div>
-          <div style="font-size: 15px; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px;">TICKET DE VENTA</div>
+          <div class="brand">CA VALLUNA</div>
+          <div style="font-size: 12px; font-weight: bold; border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px;">TICKET DE VENTA</div>
         </div>
         
         <div class="info-block">
           <div><strong>Pedido Nro:</strong> ${pedidoActivo ? (pedidoActivo.numero_diario || pedidoActivo.id) : '--'}</div>
+          <div><strong>Tipo:</strong> ${tipoPedido === 'llevar' ? 'Para llevar' : 'Para interno'}</div>
           <div><strong>Fecha:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</div>
           <div><strong>Mesa:</strong> ${selectedMesa || '--'}</div>
           <div><strong>Cliente:</strong> ${clienteInfo.razonSocial || 'Sin nombre'}</div>
@@ -464,7 +465,7 @@ function PedidosPage() {
         
         <div class="divider"></div>
         
-        <div style="font-weight: bold; display: flex; font-size: 13px; margin-bottom: 5px;">
+        <div style="font-weight: bold; display: flex; font-size: 11px; margin-bottom: 5px;">
           <div class="item-qty">CANT</div>
           <div class="item-name">DESCRIPCIÓN</div>
           <div class="item-price">IMPORTE</div>
@@ -490,7 +491,7 @@ function PedidosPage() {
           <span>TOTAL Bs.</span>
           <span>${totalPedido.toFixed(2)}</span>
         </div>
-        <div style="font-size: 13px; margin-top: 10px;">
+        <div style="font-size: 11px; margin-top: 10px;">
           <strong>Método de pago:</strong> ${metodo}
         </div>
         <div class="divider"></div>

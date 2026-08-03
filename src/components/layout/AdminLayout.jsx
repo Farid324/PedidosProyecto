@@ -57,19 +57,8 @@ function AdminLayout() {
     localStorage.setItem('admin_notifications', JSON.stringify(notifications))
   }, [notifications])
 
-  // Polling para detectar nuevos pedidos finalizados y accesos
+  // Polling para detectar nuevos pedidos finalizados
   useEffect(() => {
-    let notifyAccesos = false;
-    
-    // Obtener la configuración inicial
-    const initConfig = async () => {
-      try {
-        const configRes = await api.get('/config/notificar_accesos_admin');
-        notifyAccesos = configRes.data?.data?.valor === 'true';
-      } catch(e) {}
-    }
-    initConfig();
-
     const checkNewOrders = async () => {
       try {
         // Obtener fecha local en YYYY-MM-DD para evitar desfase de zona horaria (UTC vs Local)
@@ -86,6 +75,7 @@ function AdminLayout() {
           if (isFirstLoad.current) {
             // En la primera carga, registrar todos los completados existentes para no alertar de cosas pasadas
             completadosHoy.forEach(p => processedPedidos.current.add(`pedido_${p.id}`));
+            isFirstLoad.current = false;
           } else {
             // Buscar si hay pedidos completados nuevos (cuyo ID no esté en el Set)
             completadosHoy.forEach(pedido => {
@@ -109,74 +99,15 @@ function AdminLayout() {
             });
           }
         }
-
-        // Consultar accesos si está activo
-        if (notifyAccesos) {
-          try {
-            const accRes = await api.get(`/auth/accesos?fecha=${todayStr}`);
-            if (accRes.data.success) {
-              const accesos = accRes.data.data;
-              
-              if (isFirstLoad.current) {
-                // En la primera carga, registrar todos los accesos existentes
-                accesos.forEach(a => {
-                  processedPedidos.current.add(`acceso_ingreso_${a.id}`);
-                  if (a.fecha_salida) processedPedidos.current.add(`acceso_salida_${a.id}`);
-                });
-                isFirstLoad.current = false;
-              } else {
-                accesos.forEach(a => {
-                  // Chequear ingreso
-                  if (!processedPedidos.current.has(`acceso_ingreso_${a.id}`)) {
-                    processedPedidos.current.add(`acceso_ingreso_${a.id}`);
-                    const horaIngreso = new Date(a.fecha_ingreso).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
-                    setNotifications(prev => [
-                      {
-                        id: Date.now() + Math.random(),
-                        text: `Usuario ${a.nombre_cajero} ingresó a turno ${a.turno === 'AM' ? 'mañana' : 'tarde'}`,
-                        time: horaIngreso,
-                        read: false
-                      },
-                      ...prev
-                    ]);
-                    playNotificationSound();
-                  }
-
-                  // Chequear salida
-                  if (a.fecha_salida && !processedPedidos.current.has(`acceso_salida_${a.id}`)) {
-                    processedPedidos.current.add(`acceso_salida_${a.id}`);
-                    const horaSalida = new Date(a.fecha_salida).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
-                    setNotifications(prev => [
-                      {
-                        id: Date.now() + Math.random(),
-                        text: `Usuario ${a.nombre_cajero} salió de turno ${a.turno === 'AM' ? 'mañana' : 'tarde'}`,
-                        time: horaSalida,
-                        read: false
-                      },
-                      ...prev
-                    ]);
-                    playNotificationSound();
-                  }
-                });
-              }
-            }
-          } catch(e) { console.error(e) }
-        } else if (isFirstLoad.current) {
-            isFirstLoad.current = false;
-        }
-
       } catch (error) {
-        console.error("Error checking new orders/accesos for notifications:", error);
+        console.error("Error checking new orders for notifications:", error);
       }
     };
 
     checkNewOrders(); // Ejecución inicial
-    const interval = setInterval(checkNewOrders, 5000); // Polling cada 5s para que sea más rápido
+    const interval = setInterval(checkNewOrders, 5000); // Polling cada 5s
     
-    // Verificar si la configuración de notificaciones cambió (polling lento)
-    const configInterval = setInterval(initConfig, 60000);
-    
-    return () => { clearInterval(interval); clearInterval(configInterval); }
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {

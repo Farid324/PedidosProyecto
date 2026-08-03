@@ -109,7 +109,7 @@ function CajeroLayout() {
         const diffMs = salidaDate - now;
         const diffMins = Math.floor(diffMs / 60000);
 
-        if (diffMins <= 5 && diffMins > 0) {
+        if (diffMins <= 15 && diffMins > 0) {
           warned15Min.current = true;
           setNotifications(prev => [
             {

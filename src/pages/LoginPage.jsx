@@ -188,15 +188,66 @@ function LoginPage() {
 
   // Formularios
   const [adminForm, setAdminForm] = useState({ email: '', password: '' })
-  const [cajeroForm, setCajeroForm] = useState({ nombre: '', password: '', turno: 'AM' })
+  const [cajeroForm, setCajeroForm] = useState({ nombre: '', password: '', turno: '' })
 
   // UI
   const [showPassword, setShowPassword] = useState(false)
   const [showCajeroPassword, setShowCajeroPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [turnoAlert, setTurnoAlert] = useState('')
+
+  // Horarios de turno configurados por el admin
+  const [shiftConfig, setShiftConfig] = useState({
+    turno_manana_ingreso: '',
+    turno_manana_salida: '',
+    turno_tarde_ingreso: '',
+    turno_tarde_salida: ''
+  })
+  const [loadingConfig, setLoadingConfig] = useState(true)
 
   // Generar iconos una sola vez
   const floatingIcons = useMemo(() => generateFloatingIcons(22), [])
+
+  // Fetch shift configuration from backend
+  useEffect(() => {
+    const fetchShiftConfig = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+        const keys = ['turno_manana_ingreso', 'turno_manana_salida', 'turno_tarde_ingreso', 'turno_tarde_salida']
+        const results = {}
+        for (const k of keys) {
+          try {
+            const res = await fetch(`${apiUrl}/config/${k}`)
+            const data = await res.json()
+            results[k] = data?.data?.valor || ''
+          } catch (e) {
+            results[k] = ''
+          }
+        }
+        setShiftConfig(results)
+      } catch (e) {
+        console.error('Error cargando configuración de turnos:', e)
+      } finally {
+        setLoadingConfig(false)
+      }
+    }
+    fetchShiftConfig()
+  }, [])
+
+  // Utility: check if current time is within a shift range
+  const isWithinShift = (ingresoStr, salidaStr) => {
+    if (!ingresoStr || !salidaStr) return true // If not configured, allow
+    const now = new Date()
+    const [hI, mI] = ingresoStr.split(':').map(Number)
+    const [hS, mS] = salidaStr.split(':').map(Number)
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    const ingresoMinutes = hI * 60 + mI
+    const salidaMinutes = hS * 60 + mS
+    return currentMinutes >= ingresoMinutes && currentMinutes <= salidaMinutes
+  }
+
+  const isMorningAvailable = isWithinShift(shiftConfig.turno_manana_ingreso, shiftConfig.turno_manana_salida)
+  const isAfternoonAvailable = isWithinShift(shiftConfig.turno_tarde_ingreso, shiftConfig.turno_tarde_salida)
 
   useEffect(() => {
     const roleParam = (searchParams.get('role') || '').toLowerCase()
@@ -205,13 +256,46 @@ function LoginPage() {
     clearError()
   }, [])
 
+  // Auto-select available shift when switching to cajero
+  useEffect(() => {
+    if (activeRole === 'CAJERO' && !loadingConfig) {
+      if (isMorningAvailable && !isAfternoonAvailable) {
+        setCajeroForm(prev => ({ ...prev, turno: 'AM' }))
+      } else if (isAfternoonAvailable && !isMorningAvailable) {
+        setCajeroForm(prev => ({ ...prev, turno: 'PM' }))
+      } else if (isMorningAvailable && isAfternoonAvailable) {
+        setCajeroForm(prev => ({ ...prev, turno: 'AM' }))
+      }
+    }
+  }, [activeRole, loadingConfig, isMorningAvailable, isAfternoonAvailable])
+
   const switchRole = (role) => {
     setActiveRole(role)
     clearError()
+    setTurnoAlert('')
     if (role === 'ADMIN') setAdminForm({ email: '', password: '' })
-    if (role === 'CAJERO') setCajeroForm({ nombre: '', password: '', turno: 'AM' })
+    if (role === 'CAJERO') setCajeroForm({ nombre: '', password: '', turno: '' })
     setShowPassword(false)
     setShowCajeroPassword(false)
+  }
+
+  const handleSelectTurno = (turno) => {
+    setTurnoAlert('')
+    if (turno === 'AM' && !isMorningAvailable) {
+      const horario = shiftConfig.turno_manana_ingreso && shiftConfig.turno_manana_salida 
+        ? ` (${shiftConfig.turno_manana_ingreso} - ${shiftConfig.turno_manana_salida})`
+        : ''
+      setTurnoAlert(`No puedes ingresar al turno Mañana. Está fuera del horario configurado${horario}.`)
+      return
+    }
+    if (turno === 'PM' && !isAfternoonAvailable) {
+      const horario = shiftConfig.turno_tarde_ingreso && shiftConfig.turno_tarde_salida
+        ? ` (${shiftConfig.turno_tarde_ingreso} - ${shiftConfig.turno_tarde_salida})`
+        : ''
+      setTurnoAlert(`No puedes ingresar al turno Tarde. Está fuera del horario configurado${horario}.`)
+      return
+    }
+    setCajeroForm({ ...cajeroForm, turno })
   }
 
   const handleAdminLogin = async (e) => {
@@ -224,6 +308,10 @@ function LoginPage() {
 
   const handleCajeroLogin = async (e) => {
     e.preventDefault()
+    if (!cajeroForm.turno) {
+      setTurnoAlert('Debes seleccionar un turno para ingresar.')
+      return
+    }
     setIsLoading(true)
     const result = await loginCajero(cajeroForm.nombre, cajeroForm.password, cajeroForm.turno)
     setIsLoading(false)
@@ -395,31 +483,57 @@ function LoginPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => setCajeroForm({ ...cajeroForm, turno: 'AM' })}
+                    onClick={() => handleSelectTurno('AM')}
                     className={`p-4 rounded-lg border transition-all ${
                       cajeroForm.turno === 'AM'
                         ? 'border-[var(--azul-primario)] bg-blue-50 text-[var(--azul-primario)] shadow-md ring-2 ring-blue-200'
-                        : 'border-gray-200 hover:bg-gray-50 text-gray-600'
+                        : !isMorningAvailable
+                          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                          : 'border-gray-200 hover:bg-gray-50 text-gray-600'
                     }`}
                   >
                     <div className="text-2xl mb-1">☀️</div>
                     <div className="font-semibold text-sm">Mañana</div>
+                    {shiftConfig.turno_manana_ingreso && shiftConfig.turno_manana_salida && (
+                      <div className={`text-[10px] mt-1 ${!isMorningAvailable ? 'text-red-400' : 'text-gray-400'}`}>
+                        {shiftConfig.turno_manana_ingreso} - {shiftConfig.turno_manana_salida}
+                      </div>
+                    )}
+                    {!isMorningAvailable && (
+                      <div className="text-[10px] mt-1 text-red-400 font-semibold">Fuera de horario</div>
+                    )}
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setCajeroForm({ ...cajeroForm, turno: 'PM' })}
+                    onClick={() => handleSelectTurno('PM')}
                     className={`p-4 rounded-lg border transition-all ${
                       cajeroForm.turno === 'PM'
                         ? 'border-[var(--azul-primario)] bg-blue-50 text-[var(--azul-primario)] shadow-md ring-2 ring-blue-200'
-                        : 'border-gray-200 hover:bg-gray-50 text-gray-600'
+                        : !isAfternoonAvailable
+                          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                          : 'border-gray-200 hover:bg-gray-50 text-gray-600'
                     }`}
                   >
                     <div className="text-2xl mb-1">🌙</div>
                     <div className="font-semibold text-sm">Tarde</div>
+                    {shiftConfig.turno_tarde_ingreso && shiftConfig.turno_tarde_salida && (
+                      <div className={`text-[10px] mt-1 ${!isAfternoonAvailable ? 'text-red-400' : 'text-gray-400'}`}>
+                        {shiftConfig.turno_tarde_ingreso} - {shiftConfig.turno_tarde_salida}
+                      </div>
+                    )}
+                    {!isAfternoonAvailable && (
+                      <div className="text-[10px] mt-1 text-red-400 font-semibold">Fuera de horario</div>
+                    )}
                   </button>
                 </div>
               </div>
+
+              {turnoAlert && (
+                <div className="bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg text-sm text-center">
+                  ⚠️ {turnoAlert}
+                </div>
+              )}
 
               {loginError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center">
@@ -430,7 +544,7 @@ function LoginPage() {
               <div className="pt-3">
                 <button
                   type="submit"
-                  disabled={isLoading || !cajeroForm.nombre.trim() || !cajeroForm.password.trim()}
+                  disabled={isLoading || !cajeroForm.nombre.trim() || !cajeroForm.password.trim() || !cajeroForm.turno}
                   className="w-full py-3 bg-[var(--azul-primario)] hover:bg-blue-700 text-white rounded-lg font-bold transition-colors disabled:opacity-50 flex justify-center"
                 >
                   {isLoading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : 'Iniciar Turno'}

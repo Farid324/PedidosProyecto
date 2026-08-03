@@ -24,8 +24,7 @@ function ConfiguracionPage() {
 
   // Estados Notificaciones
   const [notificaciones, setNotificaciones] = useState({
-    notificar_fin_turno_cajero: 'false',
-    notificar_accesos_admin: 'false'
+    notificar_fin_turno_cajero: 'false'
   })
   const [loadingNotificaciones, setLoadingNotificaciones] = useState(false)
   const [savedNotificaciones, setSavedNotificaciones] = useState(false)
@@ -104,7 +103,7 @@ function ConfiguracionPage() {
         }
         setTurnos(results)
 
-        const notifKeys = ['notificar_fin_turno_cajero', 'notificar_accesos_admin']
+        const notifKeys = ['notificar_fin_turno_cajero']
         const notifResults = {}
         for (const k of notifKeys) {
           const res = await configuracionService.getConfig(k)
@@ -119,7 +118,45 @@ function ConfiguracionPage() {
     }
   }
 
+  // Utilidad para convertir "HH:MM" a minutos totales
+  const timeToMinutes = (timeStr) => {
+    if (!timeStr) return null
+    const [h, m] = timeStr.split(':').map(Number)
+    return h * 60 + m
+  }
+
   const handleSaveTurnos = async () => {
+    // Validaciones de horarios
+    const miIngreso = timeToMinutes(turnos.turno_manana_ingreso)
+    const miSalida = timeToMinutes(turnos.turno_manana_salida)
+    const tiIngreso = timeToMinutes(turnos.turno_tarde_ingreso)
+    const tiSalida = timeToMinutes(turnos.turno_tarde_salida)
+
+    // Verificar que todos los campos estén completos
+    if (miIngreso === null || miSalida === null || tiIngreso === null || tiSalida === null) {
+      showToast('Todos los campos de horario son requeridos', 'error')
+      return
+    }
+
+    // Verificar que ingreso sea anterior a salida en turno mañana
+    if (miIngreso >= miSalida) {
+      showToast('Turno Mañana: La hora de ingreso debe ser anterior a la hora de salida', 'error')
+      return
+    }
+
+    // Verificar que ingreso sea anterior a salida en turno tarde
+    if (tiIngreso >= tiSalida) {
+      showToast('Turno Tarde: La hora de ingreso debe ser anterior a la hora de salida', 'error')
+      return
+    }
+
+    // Verificar que el turno tarde no se solape con el turno mañana
+    // El ingreso de tarde debe ser estrictamente mayor que la salida de mañana (al menos 1 minuto después)
+    if (tiIngreso <= miSalida) {
+      showToast(`El horario del turno tarde se solapa con el turno mañana. El ingreso de tarde (${turnos.turno_tarde_ingreso}) debe ser al menos 1 minuto después de la salida de mañana (${turnos.turno_manana_salida}).`, 'error')
+      return
+    }
+
     setLoadingTurnos(true)
     try {
       const keys = Object.keys(turnos)
@@ -581,24 +618,7 @@ function ConfiguracionPage() {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between border-b pb-4">
-                <div>
-                  <h3 className="font-medium text-gray-800">Admin: Accesos de usuarios</h3>
-                  <p className="text-xs text-gray-500 mt-1">Notificarme cuando un usuario ingresa o cierra su turno.</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer"
-                    checked={notificaciones.notificar_accesos_admin === 'true'}
-                    onChange={(e) => {
-                      setNotificaciones({ ...notificaciones, notificar_accesos_admin: e.target.checked ? 'true' : 'false' });
-                      setSavedNotificaciones(false);
-                    }}
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[var(--guindo-primario)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--guindo-primario)]"></div>
-                </label>
-              </div>
+
 
             </div>
 
