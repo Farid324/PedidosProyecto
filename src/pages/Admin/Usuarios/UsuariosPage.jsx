@@ -76,12 +76,12 @@ function UsuariosPage() {
 
   const handleSaveUsuario = async (data, id = null) => {
     try {
-      if (id) {
+      if (usuarioToEdit) {
         await usuarioService.updateUsuario(id, data);
         showToast('Usuario actualizado correctamente', 'success');
       } else {
-        await usuarioService.createUsuario(data);
-        showToast('Usuario creado correctamente', 'success');
+        const res = await usuarioService.createUsuario(data);
+        showToast(res.message || 'Usuario creado correctamente', 'success');
       }
       setModalOpen(false);
       fetchUsuarios();

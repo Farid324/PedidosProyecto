@@ -71,14 +71,18 @@ const createUsuario = async (req, res) => {
       activo: true
     });
 
-    // Enviar correo de bienvenida
+    // Enviar correo de bienvenida (sólo funcionará si hay credenciales reales en .env)
     await enviarCorreoBienvenida(email, nombre, carnet);
 
     // Remover el password del objeto devuelto
     const userResponse = nuevoUsuario.toJSON();
     delete userResponse.password;
 
-    res.status(201).json({ success: true, message: 'Usuario creado exitosamente', data: userResponse });
+    res.status(201).json({ 
+      success: true, 
+      message: `Usuario creado. Contraseña inicial: ${carnet}. (No se envió correo por falta de configuración)`, 
+      data: userResponse 
+    });
   } catch (error) {
     console.error('Error al crear usuario:', error);
     res.status(500).json({ success: false, message: 'Error al crear el usuario' });

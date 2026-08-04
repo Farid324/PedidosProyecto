@@ -25,4 +25,6 @@ if (db.Producto && db.Categoria) {
   db.Producto.belongsTo(db.Categoria, { foreignKey: 'categoria_id', as: 'categoria' });
   db.Categoria.hasMany(db.Producto, { foreignKey: 'categoria_id', as: 'productos' });
 }
+if (db.Auditoria && db.Usuario) db.Auditoria.belongsTo(db.Usuario, { foreignKey: 'usuario_id' });
+
 module.exports = { sequelize, ...db };

@@ -1,9 +1,8 @@
-// server/index.js
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const { sequelize } = require('./config/database');
 
 // Importar rutas
@@ -14,6 +13,7 @@ const menuRoutes = require('./routes/menuRoutes');
 const reporteRoutes = require('./routes/reporteRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const configuracionRoutes = require('./routes/configuracionRoutes');
+const auditoriaRoutes = require('./routes/auditoriaRoutes');
 
 // Importar middleware de error
 const errorHandler = require('./middlewares/errorHandler');
@@ -47,6 +47,7 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/reportes', reporteRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/config', configuracionRoutes);
+app.use('/api/auditoria', auditoriaRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

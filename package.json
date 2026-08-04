@@ -30,6 +30,7 @@
       "dist/**/*",
       "electron/**/*",
       "server/**/*",
+      "server/.env",
       "database/**/*"
     ],
     "publish": [

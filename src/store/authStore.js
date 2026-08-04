@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import authService from '../services/authService';
+import api from '../services/api';
 
 const useAuthStore = create(
   persist(
@@ -50,6 +51,18 @@ const useAuthStore = create(
               loginError: null,
               sesionIniciada: new Date().toISOString()
             });
+            // Registrar auditoría de login
+            try {
+              await api.post('/auditoria', {
+                usuario_id: response.user.id,
+                nombre_usuario: response.user.nombre,
+                accion: 'login',
+                turno: turno,
+                detalles: `Inició sesión desde caja`
+              });
+            } catch (e) {
+              console.error('No se pudo registrar auditoría de login', e);
+            }
           }
           
           return response;
@@ -65,11 +78,24 @@ const useAuthStore = create(
           const response = await authService.cambiarTurno(nuevoTurno);
           
           if (response.success) {
+            const state = get();
             set({
               user: response.user,
               turno: nuevoTurno,
               sesionIniciada: new Date().toISOString()
             });
+            // Registrar auditoría
+            try {
+              if (state.role === 'cajero' && state.user) {
+                await api.post('/auditoria', {
+                  usuario_id: state.user.id,
+                  nombre_usuario: state.user.nombre,
+                  accion: 'login',
+                  turno: nuevoTurno,
+                  detalles: `Cambió al turno ${nuevoTurno}`
+                });
+              }
+            } catch (e) {}
           }
           
           return response;
@@ -84,6 +110,22 @@ const useAuthStore = create(
       })),
 
       logout: async () => {
+        const state = get();
+        // Si era cajero, registramos su logout antes de limpiar el estado
+        if (state.role === 'cajero' && state.user) {
+          try {
+            await api.post('/auditoria', {
+              usuario_id: state.user.id,
+              nombre_usuario: state.user.nombre,
+              accion: 'logout',
+              turno: state.turno,
+              detalles: `Cerró sesión`
+            });
+          } catch (e) {
+            console.error('No se pudo registrar auditoría de logout', e);
+          }
+        }
+
         await authService.logout();
         set({
           user: null,

@@ -19,18 +19,18 @@ const enviarCorreoBienvenida = async (email, nombre, carnet) => {
   }
   
   try {
-    // Ruta a la imagen del logo en el frontend
-    const logoPath = path.join(__dirname, '../../src/assets/images/LogoAtavismoLetra.png');
+    // Ruta a la imagen del logo (empaquetado junto al server)
+    const logoPath = path.join(__dirname, '../assets/images/LogoAtavismoLetra.png');
 
     const mailOptions = {
-      from: `"Atavismo Catering" <${process.env.EMAIL_USER}>`,
+      from: `"Casa Valluna Catering" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: 'Bienvenido a Atavismo Catering - Credenciales de Acceso',
+      subject: 'Bienvenido a Casa Valluna Catering - Credenciales de Acceso',
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
           <!-- Encabezado con color Guindo -->
           <div style="background-color: #7a1523; padding: 40px 20px; text-align: center; border-bottom: 3px solid #5a0f19;">
-            <img src="cid:logoatavismo" alt="Atavismo Catering" style="max-width: 280px; display: block; margin: 0 auto;" />
+            <img src="cid:logoatavismo" alt="Casa Valluna" style="max-width: 280px; display: block; margin: 0 auto;" />
           </div>
           
           <!-- Cuerpo del correo -->
@@ -38,7 +38,7 @@ const enviarCorreoBienvenida = async (email, nombre, carnet) => {
             <h2 style="color: #222222; font-size: 26px; margin-top: 0; margin-bottom: 20px; text-align: center; font-weight: bold;">¡Bienvenido al equipo, ${nombre}!</h2>
             
             <p style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 30px; text-align: center;">
-              El Administrador de <strong>Atavismo Catering</strong> ha creado tu cuenta oficial en el sistema de pedidos. A continuación, encontrarás tus credenciales de acceso:
+              El Administrador de <strong>Casa Valluna Catering</strong> ha creado tu cuenta oficial en el sistema de pedidos. A continuación, encontrarás tus credenciales de acceso:
             </p>
             
             <!-- Caja de Credenciales -->
@@ -61,7 +61,7 @@ const enviarCorreoBienvenida = async (email, nombre, carnet) => {
           <!-- Pie de página -->
           <div style="background-color: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
             <p style="color: #999999; font-size: 13px; margin: 0;">
-              © ${new Date().getFullYear()} Atavismo Catering. Todos los derechos reservados.
+              © ${new Date().getFullYear()} Casa Valluna Catering. Todos los derechos reservados.
             </p>
             <p style="color: #aaaaaa; font-size: 12px; margin: 8px 0 0 0;">
               Este es un correo generado automáticamente. Por favor, no respondas a este mensaje.

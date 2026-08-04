@@ -51,7 +51,7 @@ function AdminLayout() {
       return []
     }
   })
-  const processedPedidos = useRef(new Set())
+  const processedPedidos = useRef(new Set(JSON.parse(localStorage.getItem('admin_processed_pedidos') || '[]')))
   const isFirstLoad = useRef(true)
 
   // Persistir notificaciones
@@ -74,16 +74,19 @@ function AdminLayout() {
           // Filtrar pedidos completados en la lista reciente
           const completadosHoy = pedidos_recientes.filter(p => p.estado === 'completado');
 
-          if (isFirstLoad.current) {
-            // En la primera carga, registrar todos los completados existentes para no alertar de cosas pasadas
+          // Initialize local storage silently if it's perfectly empty (never used before)
+          if (!localStorage.getItem('admin_processed_pedidos')) {
             completadosHoy.forEach(p => processedPedidos.current.add(`pedido_${p.id}`));
-            isFirstLoad.current = false;
+            localStorage.setItem('admin_processed_pedidos', JSON.stringify(Array.from(processedPedidos.current)));
+            // return; NO RETURN HERE, we want it to continue processing auditories if needed
           } else {
+            let newOrdersFound = false;
             // Buscar si hay pedidos completados nuevos (cuyo ID no esté en el Set)
             completadosHoy.forEach(pedido => {
               if (!processedPedidos.current.has(`pedido_${pedido.id}`)) {
                 // Registrar el nuevo ID para no repetir
                 processedPedidos.current.add(`pedido_${pedido.id}`);
+                newOrdersFound = true;
 
                 // Disparar notificación
                 const notifMsg = `Mesa ${pedido.cliente.replace('Mesa ', '')}: Pedido finalizado por ${pedido.total}`;
@@ -99,8 +102,53 @@ function AdminLayout() {
                 playNotificationSound();
               }
             });
+
+            if (newOrdersFound) {
+              localStorage.setItem('admin_processed_pedidos', JSON.stringify(Array.from(processedPedidos.current)));
+            }
           }
         }
+
+        // Revisar auditorías de login/logout
+        try {
+          const resAuditoria = await api.get(`/auditoria/recientes?date=${todayStr}`);
+          if (resAuditoria.data.success) {
+            const auditos = resAuditoria.data.data;
+
+            if (!localStorage.getItem('admin_processed_audits')) {
+              auditos.forEach(a => processedPedidos.current.add(`audit_${a.id}`));
+              localStorage.setItem('admin_processed_audits', JSON.stringify(Array.from(processedPedidos.current)));
+            } else {
+              let newAuditsFound = false;
+              auditos.forEach(a => {
+                if (!processedPedidos.current.has(`audit_${a.id}`)) {
+                  processedPedidos.current.add(`audit_${a.id}`);
+                  newAuditsFound = true;
+
+                  const actionText = a.accion === 'login' ? 'ha iniciado sesión' : 'ha cerrado sesión';
+                  const notifMsg = `El cajero ${a.nombre_usuario} ${actionText} (Turno ${a.turno || 'N/A'})`;
+                  setNotifications(prev => [
+                    {
+                      id: Date.now() + Math.random(),
+                      text: notifMsg,
+                      time: new Date(a.createdAt).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' }),
+                      read: false
+                    },
+                    ...prev
+                  ]);
+                  playNotificationSound();
+                }
+              });
+
+              if (newAuditsFound) {
+                localStorage.setItem('admin_processed_audits', JSON.stringify(Array.from(processedPedidos.current)));
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error checking audits for notifications:", e);
+        }
+
       } catch (error) {
         console.error("Error checking new orders for notifications:", error);
       }
