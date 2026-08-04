@@ -11,6 +11,7 @@
     "server:dev": "nodemon server/index.js",
     "electron": "electron .",
     "electron:dev": "cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron ./electron/main.js",
+    "dev:desktop": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && npm run electron:dev\"",
     "electron:build": "vite build && electron-builder",
     "package": "npm run build && electron-builder",
     "package:win": "npm run build && electron-builder --win"
@@ -19,6 +20,28 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "build": {
+    "appId": "com.farid.pedidos",
+    "productName": "Sistema de Pedidos",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "server/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Farid324",
+        "repo": "PedidosProyecto"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
@@ -36,7 +59,9 @@
     "axios": "^1.12.2",
     "cors": "^2.8.5",
     "dayjs": "^1.11.18",
+    "electron-is-dev": "^3.0.1",
     "electron-pos-printer": "^1.3.8",
+    "electron-updater": "^6.8.9",
     "express": "^5.1.0",
     "lucide-react": "^0.544.0",
     "pdfmake": "^0.2.20",

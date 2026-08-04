@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargando Sistema...</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #AB0030; /* guindo-primario */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            -webkit-user-select: none;
+            -webkit-app-region: drag; /* Permite arrastrar la ventana */
+            color: #ffffff;
+        }
+
+        .logo-container {
+            position: relative;
+            animation: pulse 2.5s infinite ease-in-out;
+            margin-bottom: 25px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            padding: 10px; /* Borde blanco alrededor del logo */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-container img {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%; /* Hace el logo redondo */
+            object-fit: cover;
+        }
+
+        .title {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            color: #F8F2F3; /* fondo-color (clarito) */
+            font-size: 15px;
+            margin-bottom: 45px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* Spinner / Loader Moderno (Blanco) */
+        .loader {
+            width: 50px;
+            height: 50px;
+            position: relative;
+        }
+
+        .loader:before, .loader:after {
+            content: '';
+            border-radius: 50%;
+            position: absolute;
+            inset: 0;
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.2) inset;
+        }
+        .loader:after {
+            box-shadow: 0 4px 0 #ffffff inset; 
+            animation: rotate 1s linear infinite;
+        }
+
+        /* Texto de estado para las actualizaciones */
+        #status-text {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #ffffff;
+            font-weight: 600;
+            animation: fade 1.5s infinite;
+            letter-spacing: 0.5px;
+        }
+
+        /* Animaciones */
+        @keyframes rotate {
+            0% { transform: rotate(0) }
+            100% { transform: rotate(360deg) }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
+        }
+
+        @keyframes fade {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="logo.png" alt="Logo">
+    </div>
+    <div class="title">Casa Valluna</div>
+    <div class="subtitle">Sistema de Restaurante Profesional</div>
+    
+    <div class="loader"></div>
+    
+    <div id="status-text">Iniciando sistema...</div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.on('message', (event, text) => {
+            document.getElementById('status-text').innerText = text;
+        });
+    </script>
+</body>
+</html>

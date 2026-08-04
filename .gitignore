@@ -36,3 +36,5 @@ release/
 # DB local (SQLite)
 database/*.db
 database/*.sqlite
+
+dist-electron/

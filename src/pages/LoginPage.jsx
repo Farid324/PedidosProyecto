@@ -343,7 +343,7 @@ function LoginPage() {
         <Modal
           isOpen={showLoginModal}
           onClose={() => {}} 
-          title={<>BIENVENIDO A <br /> ATAVISMO</>}
+          title={<>BIENVENIDO A <br /> CASA VALLUNA</>}
           subtitle={<>INGRESE SUS <br /> CREDENCIALES PARA INGRESAR</>}
           imageSrc={logoImg}
           imageAlt="Logo Atavismo"
