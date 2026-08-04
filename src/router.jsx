@@ -1,5 +1,5 @@
 // src/router.jsx
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createHashRouter, Navigate } from 'react-router-dom'
 import useAuthStore from './store/authStore'
 
 // Páginas
@@ -38,7 +38,7 @@ function ProtectedRoute({ children, allowedRoles }) {
 }
 
 // Configuración del router
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <Navigate to="/login" replace />

@@ -73,9 +73,17 @@ const startServer = async () => {
     console.log('✅ Base de datos sincronizada');
     
     // Iniciar servidor
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
       console.log(`📝 API disponible en http://localhost:${PORT}/api`);
+    });
+
+    server.on('error', (e) => {
+      if (e.code === 'EADDRINUSE') {
+        console.log(`⚠️ El puerto ${PORT} ya está en uso. Asumiendo servidor activo.`);
+      } else {
+        console.error('❌ Error en el servidor:', e);
+      }
     });
   } catch (error) {
     console.error('❌ Error al iniciar el servidor:', error);
