@@ -24,7 +24,7 @@ if (!gotTheLock) {
         createSplashWindow();
 
         // 1. Configurar ruta de la BD para producción
-        if (!isDev) {
+        if (app.isPackaged) {
             const userDataPath = app.getPath('userData');
             process.env.DB_STORAGE = path.join(userDataPath, 'restaurant.db');
         }
@@ -40,7 +40,7 @@ if (!gotTheLock) {
         }
 
         // 3. Revisar actualizaciones si estamos en producción
-        if (!isDev) {
+        if (app.isPackaged) {
             splashWindow.webContents.send('message', 'Buscando actualizaciones...');
             autoUpdater.checkForUpdatesAndNotify();
         } else {
@@ -108,7 +108,7 @@ function createMainWindow() {
         }
     });
 
-    if (isDev) {
+    if (!app.isPackaged) {
         // En desarrollo, apuntamos a Vite
         mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173');
         mainWindow.webContents.openDevTools();
