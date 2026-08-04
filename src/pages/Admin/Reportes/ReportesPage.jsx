@@ -206,8 +206,8 @@ function ReportesPage() {
   };
 
   const handleLimpiarHistorial = async () => {
-    if (window.confirm("⚠️ ADVERTENCIA: Esta acción eliminará permanentemente todos los reportes y facturas con más de 6 meses de antigüedad. ¿Estás absolutamente seguro de querer continuar?")) {
-      if (window.confirm("Esta acción no se puede deshacer. ¿Proceder con la limpieza?")) {
+    if (window.confirm("⚠️ ADVERTENCIA: Esta acción eliminará permanentemente TODOS los reportes, facturas y pedidos del sistema. ¿Estás absolutamente seguro de querer continuar?")) {
+      if (window.confirm("Esta acción NO se puede deshacer y tu historial de ventas quedará en cero. ¿Proceder con la limpieza total?")) {
         try {
           const res = await api.delete('/reportes/limpiar-historial');
           if (res.data.success) {

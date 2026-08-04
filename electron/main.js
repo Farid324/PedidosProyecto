@@ -39,6 +39,15 @@ if (!gotTheLock) {
                 console.log("Database copied to userData on first run");
             }
 
+            // ASEGURAR que el archivo tenga permisos de escritura (quita el atributo Read-Only)
+            if (fs.existsSync(targetDbPath)) {
+                try {
+                    fs.chmodSync(targetDbPath, 0o666);
+                } catch (err) {
+                    console.log("Error al cambiar permisos de BD:", err);
+                }
+            }
+
             process.env.DB_STORAGE = targetDbPath;
             console.log("DB Path Set to:", process.env.DB_STORAGE);
         }

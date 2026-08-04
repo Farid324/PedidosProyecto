@@ -71,8 +71,8 @@ const startServer = async () => {
     // Desactivar restricciones FK temporalmente para permitir actualizaciones de esquema
     await sequelize.query('PRAGMA foreign_keys = OFF');
     
-    // Sincronizar modelos
-    await sequelize.sync({ alter: true });
+    // Sincronizar modelos sin "alter" para evitar crasheos de SQLite con constraints
+    await sequelize.sync();
     
     // Reactivar restricciones FK
     await sequelize.query('PRAGMA foreign_keys = ON');
@@ -94,7 +94,7 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error('❌ Error al iniciar el servidor:', error);
-    process.exit(1);
+    // process.exit(1); // Eliminado para no cerrar la app de Electron
   }
 };
 

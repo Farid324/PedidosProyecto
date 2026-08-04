@@ -477,33 +477,36 @@ const getDashboardAdministrador = async (req, res) => {
 
 const limpiarHistorialAntiguo = async (req, res) => {
   try {
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-    const facturas = await Factura.findAll({
-      where: {
-        fecha_emision: { [Op.lt]: sixMonthsAgo }
-      }
-    });
+    // El usuario solicitó borrar TODOS los reportes y pedidos sin importar la fecha
+    const facturas = await Factura.findAll();
 
     const pedidoIds = facturas.map(f => f.pedido_id).filter(id => id != null);
     const facturaIds = facturas.map(f => f.id);
 
+    // También buscar todos los pedidos existentes por si hay pedidos sin factura
+    const todosLosPedidos = await Pedido.findAll();
+    const todosPedidoIds = todosLosPedidos.map(p => p.id);
+
+    // Borrar todas las facturas
     if (facturaIds.length > 0) {
       await Factura.destroy({ where: { id: facturaIds } });
     }
 
-    if (pedidoIds.length > 0) {
-      await Pedido.destroy({ where: { id: pedidoIds } });
+    // Borrar todos los pedidos (esto borrará en cascada los detalles si está configurado, 
+    // de lo contrario deberíamos borrar DetallePedido también).
+    // Usaremos todosPedidoIds para asegurar que no quede ninguno.
+    if (todosPedidoIds.length > 0) {
+      await DetallePedido.destroy({ where: { pedido_id: todosPedidoIds } });
+      await Pedido.destroy({ where: { id: todosPedidoIds } });
     }
 
     return res.json({ 
       success: true, 
-      message: `Se han eliminado ${facturaIds.length} reportes/facturas y sus pedidos asociados con más de 6 meses de antigüedad.`
+      message: `Se han eliminado TODOS los reportes, facturas y pedidos del sistema correctamente.`
     });
   } catch (error) {
     console.error('Error en limpiarHistorialAntiguo:', error);
-    return res.status(500).json({ success: false, message: 'Error al limpiar el historial antiguo' });
+    return res.status(500).json({ success: false, message: 'Error al limpiar el historial' });
   }
 };
 
