@@ -41,7 +41,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "electron/logo.png"
+      "icon": "electron/logo256.png"
     }
   },
   "devDependencies": {
