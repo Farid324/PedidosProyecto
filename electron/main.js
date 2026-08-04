@@ -32,6 +32,22 @@ if (!gotTheLock) {
         // 2. Iniciar el servidor backend (Node + Express + SQLite)
         splashWindow.webContents.send('message', 'Iniciando servidor local...');
         try {
+            if (app.isPackaged) {
+                const userDataPath = app.getPath('userData');
+                const dbFolder = path.join(userDataPath, 'database');
+                if (!fs.existsSync(dbFolder)) fs.mkdirSync(dbFolder, { recursive: true });
+                
+                const targetDbPath = path.join(dbFolder, 'restaurant.db');
+                const sourceDbPath = path.join(__dirname, '../database/restaurant.db');
+                
+                if (!fs.existsSync(targetDbPath) && fs.existsSync(sourceDbPath)) {
+                    fs.copyFileSync(sourceDbPath, targetDbPath);
+                    console.log("Database copied to userData on first run");
+                }
+                
+                process.env.DB_STORAGE = targetDbPath;
+                console.log("DB Path Set to:", process.env.DB_STORAGE);
+            }
             // Requerimos el backend directamente
             require('../server/index.js');
         } catch (error) {
@@ -42,7 +58,12 @@ if (!gotTheLock) {
         // 3. Revisar actualizaciones si estamos en producción
         if (app.isPackaged) {
             splashWindow.webContents.send('message', 'Buscando actualizaciones...');
-            autoUpdater.checkForUpdatesAndNotify();
+            autoUpdater.on('error', (err) => {
+                console.log('Error de auto-update:', err);
+            });
+            autoUpdater.checkForUpdatesAndNotify().catch(err => {
+                console.log("No se pudo buscar actualizaciones:", err);
+            });
         } else {
             // En desarrollo, continuar
             setTimeout(createMainWindow, 2000);
@@ -108,14 +129,12 @@ function createMainWindow() {
         }
     });
 
-    if (!app.isPackaged) {
-        // En desarrollo, apuntamos a Vite
-        mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173');
-        mainWindow.webContents.openDevTools();
-    } else {
-        // En producción, cargamos el build de React
-        mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
-    }
+    // FORCE LOAD DIST FOR TESTING
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    
+    mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+      console.log(`[Renderer] ${message}`);
+    });
 
     mainWindow.once('ready-to-show', () => {
         if (splashWindow) {
