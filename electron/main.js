@@ -123,6 +123,7 @@ function createMainWindow() {
         minHeight: 768,
         show: false, // Mostrar cuando esté cargada
         autoHideMenuBar: true,
+        icon: path.join(__dirname, 'logo.png'),
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true

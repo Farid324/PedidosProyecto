@@ -1,6 +1,8 @@
 // src/components/layout/Sidebar.jsx
 import { LuPanelRight } from "react-icons/lu";
 import { LogOut } from 'lucide-react'
+import LogoConLetra from '../../assets/images/LogoAtavismoLetra.png';
+
 function Sidebar({ menuItems, collapsed, onToggle, currentPath, onNavigate, userRole, onLogout }) {
   const isActive = (path) => currentPath === path
 
@@ -23,7 +25,7 @@ function Sidebar({ menuItems, collapsed, onToggle, currentPath, onNavigate, user
         </button>
         {!collapsed && (
             <div>
-              <img src="\src\assets\images\LogoAtavismoLetra.png" alt="LogoConLetra" />
+              <img src={LogoConLetra} alt="Logo Casa Valluna" />
             </div>
           )}
       </div>

@@ -40,7 +40,8 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "electron/logo.png"
     }
   },
   "devDependencies": {
