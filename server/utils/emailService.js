@@ -12,6 +12,12 @@ const transporter = nodemailer.createTransport({
 });
 
 const enviarCorreoBienvenida = async (email, nombre, carnet) => {
+  // Si no hay credenciales configuradas, skip silenciosamente
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.log('📧 Envío de correo omitido: EMAIL_USER / EMAIL_PASS no configurados en .env');
+    return false;
+  }
+  
   try {
     // Ruta a la imagen del logo en el frontend
     const logoPath = path.join(__dirname, '../../src/assets/images/LogoAtavismoLetra.png');

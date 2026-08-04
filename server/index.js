@@ -22,9 +22,15 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middlewares
-// Configuración específica de CORS para el login desde el frontend
+// Configuración de CORS - acepta peticiones desde Electron (file://) y desarrollo (localhost)
 app.use(cors({
-  origin: 'http://localhost:5173', // Permite conexión desde Vite
+  origin: function(origin, callback) {
+    // Permitir peticiones sin origin (file://, mismo origen, curl, etc.)
+    if (!origin) return callback(null, true);
+    // Permitir cualquier localhost
+    if (origin.startsWith('http://localhost')) return callback(null, true);
+    callback(null, true); // En app local de escritorio, permitir todo
+  },
   credentials: true 
 }));
 

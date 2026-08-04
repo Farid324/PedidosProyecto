@@ -60,51 +60,40 @@
             letter-spacing: 0.5px;
         }
 
-        /* Spinner / Loader Moderno (Blanco) */
-        .loader {
-            width: 50px;
-            height: 50px;
-            position: relative;
+        /* Barra de progreso */
+        .progress-container {
+            width: 280px;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
         }
 
-        .loader:before, .loader:after {
-            content: '';
-            border-radius: 50%;
-            position: absolute;
-            inset: 0;
-            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.2) inset;
-        }
-        .loader:after {
-            box-shadow: 0 4px 0 #ffffff inset; 
-            animation: rotate 1s linear infinite;
+        .progress-bar {
+            height: 100%;
+            width: 5%;
+            background: linear-gradient(90deg, #ffffff, #f0c0cc);
+            border-radius: 10px;
+            transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
         }
 
-        /* Texto de estado para las actualizaciones */
+        /* Texto de estado */
         #status-text {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #ffffff;
-            font-weight: 600;
-            animation: fade 1.5s infinite;
-            letter-spacing: 0.5px;
+            margin-top: 18px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            transition: opacity 0.3s ease;
         }
 
         /* Animaciones */
-        @keyframes rotate {
-            0% { transform: rotate(0) }
-            100% { transform: rotate(360deg) }
-        }
-
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6); }
             100% { transform: scale(1); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
-        }
-
-        @keyframes fade {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
         }
     </style>
 </head>
@@ -115,14 +104,23 @@
     <div class="title">Casa Valluna</div>
     <div class="subtitle">Sistema de Restaurante Profesional</div>
     
-    <div class="loader"></div>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
     
     <div id="status-text">Iniciando sistema...</div>
 
     <script>
         const { ipcRenderer } = require('electron');
+        const progressBar = document.getElementById('progress-bar');
+        const statusText = document.getElementById('status-text');
+
         ipcRenderer.on('message', (event, text) => {
-            document.getElementById('status-text').innerText = text;
+            statusText.innerText = text;
+        });
+
+        ipcRenderer.on('progress', (event, percent) => {
+            progressBar.style.width = percent + '%';
         });
     </script>
 </body>
