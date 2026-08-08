@@ -72,7 +72,7 @@ const startServer = async () => {
     await sequelize.query('PRAGMA foreign_keys = OFF');
     
     // Sincronizar modelos
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     
     // Reactivar restricciones FK
     await sequelize.query('PRAGMA foreign_keys = ON');
