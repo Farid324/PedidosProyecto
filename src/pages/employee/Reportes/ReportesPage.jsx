@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter, Eye, X, FileText } from 'lucide-react';
+import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter, Eye, X, FileText, Printer, CreditCard } from 'lucide-react';
 import useAuthStore from '../../../store/authStore';
 import api from '../../../services/api';
+import { getLocalDateString } from '../../../utils/dateUtils';
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import { printShiftReceipt } from '../../../utils/printHelpers';
 pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
 
 function ReportesPage() {
@@ -14,25 +16,25 @@ function ReportesPage() {
 
   // Filtros de fecha
   const [period, setPeriod] = useState('hoy');
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(getLocalDateString());
+  const [endDate, setEndDate] = useState(getLocalDateString());
 
   useEffect(() => {
     const today = new Date();
     if (period === 'hoy') {
-      const dateStr = today.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(today);
       setStartDate(dateStr);
       setEndDate(dateStr);
     } else if (period === 'ayer') {
       const ayer = new Date();
       ayer.setDate(ayer.getDate() - 1);
-      const dateStr = ayer.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(ayer);
       setStartDate(dateStr);
       setEndDate(dateStr);
     } else if (period === 'mes') {
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      setStartDate(firstDay.toISOString().split('T')[0]);
-      setEndDate(today.toISOString().split('T')[0]);
+      setStartDate(getLocalDateString(firstDay));
+      setEndDate(getLocalDateString(today));
     }
   }, [period]);
 
@@ -146,6 +148,16 @@ function ReportesPage() {
     pdfMake.createPdf(documentDefinition).download(`mi_reporte_ventas_${periodLabel}.pdf`);
   };
 
+  const handlePrintShiftReceipt = () => {
+    const printData = {
+      cajero: user?.nombre || user?.name,
+      fecha: startDate,
+      turno: data.turno !== 'N/D' ? data.turno : turno,
+      resumen: data.resumen
+    };
+    printShiftReceipt(printData);
+  };
+
   const filteredVentas = data.ventas.filter(v => {
     const matchPedido = v.numero_pedido?.toString().includes(searchPedido) || v.numero_reporte?.toLowerCase().includes(searchPedido.toLowerCase());
     const matchRazon = v.razon_social?.toLowerCase().includes(searchRazon.toLowerCase());
@@ -231,11 +243,15 @@ function ReportesPage() {
             <FileText size={20} />
             PDF
           </button>
+          <button onClick={handlePrintShiftReceipt} className="btn btn-primary flex items-center gap-2 bg-blue-600 hover:bg-blue-700 py-2.5 border-0">
+            <Printer size={20} />
+            Imprimir Cierre
+          </button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="card hover:shadow-lg transition">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-blue-100 p-3 rounded-lg">
@@ -269,7 +285,17 @@ function ReportesPage() {
         <div className="card hover:shadow-lg transition">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-orange-100 p-3 rounded-lg">
-              <ShoppingCart className="text-orange-600" size={24} />
+              <CreditCard className="text-orange-600" size={24} />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800">Bs {data.resumen?.total_tarjeta?.toFixed(2) || '0.00'}</h3>
+          <p className="text-gray-600 text-sm mt-1">Tarjeta/Otro</p>
+        </div>
+
+        <div className="card hover:shadow-lg transition">
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-yellow-100 p-3 rounded-lg">
+              <ShoppingCart className="text-yellow-600" size={24} />
             </div>
           </div>
           <h3 className="text-2xl font-bold text-gray-800">{data.resumen?.total_pedidos || 0}</h3>
@@ -313,6 +339,7 @@ function ReportesPage() {
               <option value="Todos">Metodo: Todos</option>
               <option value="QR">Por QR</option>
               <option value="EFECTIVO">Efectivo</option>
+              <option value="TARJETA">Tarjeta/Otro</option>
             </select>
           </div>
         </div>

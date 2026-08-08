@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
+import { getLocalDateString } from '../../utils/dateUtils'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 import LogoutModal from '../common/LogoutModal'
@@ -63,9 +64,7 @@ function AdminLayout() {
   useEffect(() => {
     const checkNewOrders = async () => {
       try {
-        // Obtener fecha local en YYYY-MM-DD para evitar desfase de zona horaria (UTC vs Local)
-        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-        const todayStr = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+        const todayStr = getLocalDateString();
 
         const res = await api.get(`/reportes/admin-dashboard?date=${todayStr}`);
         if (res.data.success) {

@@ -11,6 +11,7 @@ pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs
 import useAuthStore from '../../../store/authStore'
 import pedidoService from '../../../services/pedidoService'
 import menuService from '../../../services/menuService'
+import { getLocalDateString } from '../../../utils/dateUtils'
 
 function CajeroDashboard() {
   const { user, turno } = useAuthStore()
@@ -25,7 +26,7 @@ function CajeroDashboard() {
     const fetchData = async () => {
       try {
         // Fetch today's orders
-        const today = new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
+        const today = getLocalDateString()
         const resPedidos = await pedidoService.getPedidos({ fecha: today })
         
         // Fetch products for popular menu
@@ -132,7 +133,7 @@ function CajeroDashboard() {
         totalText: { fontSize: 14, bold: true, alignment: 'right', margin: [0, 10, 0, 0] }
       }
     }
-    pdfMake.createPdf(documentDefinition).download(`Reporte_Turno_${turno}_${new Date().toISOString().split('T')[0]}.pdf`)
+    pdfMake.createPdf(documentDefinition).download(`Reporte_Turno_${turno}_${getLocalDateString()}.pdf`)
     setIsPdfModalOpen(false)
   }
 
