@@ -11,6 +11,8 @@ import OrderSummary from '../../../components/pedidos/OrderSummary'
 import RegistrarModal from '../../../components/pedidos/RegistrarModal'
 import CuentaModal from '../../../components/pedidos/CuentaModal'
 import CuentaConfirmModal from '../../../components/pedidos/CuentaConfirmModal'
+import TarjetaModal from '../../../components/pedidos/TarjetaModal'
+import TarjetaConfirmModal from '../../../components/pedidos/TarjetaConfirmModal'
 import FinalizarModal from '../../../components/pedidos/FinalizarModal'
 import FinalizarTodasModal from '../../../components/pedidos/FinalizarTodasModal'
 
@@ -34,11 +36,14 @@ function PedidosPage() {
   const [mesasOcupadas, setMesasOcupadas] = useState([])
   const [pedidoActivo, setPedidoActivo] = useState(null)
   const [pagoQR, setPagoQR] = useState(false)
+  const [pagoTarjeta, setPagoTarjeta] = useState(false)
   const [qrImage, setQrImage] = useState(null)
   // Modales
   const [registrarModalOpen, setRegistrarModalOpen] = useState(false)
   const [cuentaModalOpen, setCuentaModalOpen] = useState(false)
   const [cuentaConfirmModalOpen, setCuentaConfirmModalOpen] = useState(false)
+  const [tarjetaModalOpen, setTarjetaModalOpen] = useState(false)
+  const [tarjetaConfirmModalOpen, setTarjetaConfirmModalOpen] = useState(false)
   const [finalizarModalOpen, setFinalizarModalOpen] = useState(false)
   const [finalizarTodasModalOpen, setFinalizarTodasModalOpen] = useState(false)
   const [isFinalizandoTodas, setIsFinalizandoTodas] = useState(false)
@@ -110,6 +115,7 @@ function PedidosPage() {
         setTipoPedido(res.data.tipo_pedido || 'mesa')
         setObservaciones(res.data.observaciones || '')
         setPagoQR(res.data.pago_qr || false)
+        setPagoTarjeta(res.data.pago_tarjeta || false)
 
         // Cargar items al carrito
         const nuevoCarrito = {}
@@ -133,6 +139,7 @@ function PedidosPage() {
         setTipoPedido('mesa')
         setObservaciones('')
         setCarrito({})
+        setPagoTarjeta(false)
       }
     } catch (error) {
       console.error("Error cargando pedido de mesa:", error)
@@ -245,7 +252,7 @@ function PedidosPage() {
   const handleConfirmFinalizar = async () => {
     setFinalizarModalOpen(false)
     try {
-      const metodo = pagoQR ? 'QR' : 'EFECTIVO'
+      const metodo = pagoTarjeta ? 'TARJETA' : (pagoQR ? 'QR' : 'EFECTIVO')
       await pedidoService.finalizarPedido(pedidoActivo.id, metodo)
 
       // Limpiar todo
@@ -254,6 +261,7 @@ function PedidosPage() {
       setClienteInfo({ razonSocial: '', nit: '' })
       setObservaciones('')
       setPagoQR(false)
+      setPagoTarjeta(false)
       setSelectedMesa(null)
       await fetchMesasOcupadas()
 
@@ -272,7 +280,7 @@ function PedidosPage() {
       const pedidosPendientes = res.data || []
       
       for (const pedido of pedidosPendientes) {
-        await pedidoService.finalizarPedido(pedido.id, pedido.pago_qr ? 'QR' : 'EFECTIVO')
+        await pedidoService.finalizarPedido(pedido.id, pedido.pago_tarjeta ? 'TARJETA' : (pedido.pago_qr ? 'QR' : 'EFECTIVO'))
       }
 
       setPedidoActivo(null)
@@ -280,6 +288,7 @@ function PedidosPage() {
       setClienteInfo({ razonSocial: '', nit: '' })
       setObservaciones('')
       setPagoQR(false)
+      setPagoTarjeta(false)
       setSelectedMesa(null)
       await fetchMesasOcupadas()
       
@@ -377,12 +386,13 @@ function PedidosPage() {
 
   const handleConfirmCuenta = async () => {
     setPagoQR(true)
+    setPagoTarjeta(false) // Desactivar tarjeta si se activa QR
     setCuentaModalOpen(false)
 
     // Actualizar en backend si hay pedido activo
     if (pedidoActivo) {
       try {
-        await pedidoService.updatePedido(pedidoActivo.id, { pago_qr: true, metodo_pago: 'QR' })
+        await pedidoService.updatePedido(pedidoActivo.id, { pago_qr: true, pago_tarjeta: false, metodo_pago: 'QR' })
       } catch (error) {
         console.error("Error actualizando pago QR:", error)
       }
@@ -406,6 +416,49 @@ function PedidosPage() {
     setCuentaConfirmModalOpen(false)
   }
 
+  // TARJETA (toggle pago con tarjeta)
+  const handleTarjeta = () => {
+    if (pagoTarjeta) {
+      // Ya está activado, preguntar si desactiva
+      setTarjetaConfirmModalOpen(true)
+    } else {
+      // Mostrar modal de tarjeta
+      setTarjetaModalOpen(true)
+    }
+  }
+
+  const handleConfirmTarjeta = async () => {
+    setPagoTarjeta(true)
+    setPagoQR(false) // Desactivar QR si se activa tarjeta
+    setTarjetaModalOpen(false)
+
+    // Actualizar en backend si hay pedido activo
+    if (pedidoActivo) {
+      try {
+        await pedidoService.updatePedido(pedidoActivo.id, { pago_tarjeta: true, pago_qr: false, metodo_pago: 'TARJETA' })
+      } catch (error) {
+        console.error("Error actualizando pago tarjeta:", error)
+      }
+    }
+  }
+
+  const handleTarjetaConfirmSi = async () => {
+    setPagoTarjeta(false)
+    setTarjetaConfirmModalOpen(false)
+
+    if (pedidoActivo) {
+      try {
+        await pedidoService.updatePedido(pedidoActivo.id, { pago_tarjeta: false, metodo_pago: 'EFECTIVO' })
+      } catch (error) {
+        console.error("Error actualizando pago:", error)
+      }
+    }
+  }
+
+  const handleTarjetaConfirmNo = () => {
+    setTarjetaConfirmModalOpen(false)
+  }
+
   // IMPRIMIR (recibo para cliente)
   const handleImprimir = () => {
     if (Object.keys(carrito).length === 0) {
@@ -414,7 +467,7 @@ function PedidosPage() {
     }
 
     const items = Object.values(carrito)
-    const metodo = pagoQR ? 'QR' : 'EFECTIVO'
+    const metodo = pagoTarjeta ? 'TARJETA' : (pagoQR ? 'QR' : 'EFECTIVO')
     
     const width = Math.floor(window.screen.width / 2);
     const height = Math.floor(window.screen.height / 2);
@@ -572,7 +625,9 @@ function PedidosPage() {
           onComanda={handleComanda}
           onCuenta={handleCuenta}
           onImprimir={handleImprimir}
+          onTarjeta={handleTarjeta}
           pagoQR={pagoQR}
+          pagoTarjeta={pagoTarjeta}
           pedidoActivo={pedidoActivo}
           validationError={false}
         />
@@ -601,6 +656,20 @@ function PedidosPage() {
         onClose={() => setCuentaConfirmModalOpen(false)}
         onConfirmSi={handleCuentaConfirmSi}
         onConfirmNo={handleCuentaConfirmNo}
+      />
+
+      <TarjetaModal
+        isOpen={tarjetaModalOpen}
+        onClose={() => setTarjetaModalOpen(false)}
+        onConfirm={handleConfirmTarjeta}
+        totalPedido={totalPedido}
+      />
+
+      <TarjetaConfirmModal
+        isOpen={tarjetaConfirmModalOpen}
+        onClose={() => setTarjetaConfirmModalOpen(false)}
+        onConfirmSi={handleTarjetaConfirmSi}
+        onConfirmNo={handleTarjetaConfirmNo}
       />
 
       <FinalizarModal

@@ -13,8 +13,9 @@ module.exports = (sequelize, DataTypes) => {
     subtotal: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
     total: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
     estado: { type: DataTypes.ENUM('pendiente', 'en_proceso', 'completado', 'cancelado'), defaultValue: 'pendiente' },
-    metodo_pago: { type: DataTypes.ENUM('EFECTIVO', 'QR'), defaultValue: 'EFECTIVO' },
+    metodo_pago: { type: DataTypes.ENUM('EFECTIVO', 'QR', 'TARJETA'), defaultValue: 'EFECTIVO' },
     pago_qr: { type: DataTypes.BOOLEAN, defaultValue: false },
+    pago_tarjeta: { type: DataTypes.BOOLEAN, defaultValue: false },
     fecha_pedido: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   }, {
     tableName: 'pedidos',

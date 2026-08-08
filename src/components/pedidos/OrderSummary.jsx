@@ -1,5 +1,5 @@
 // src/components/pedidos/OrderSummary.jsx
-import { ShoppingCart, Plus, Minus, Trash2, FileText, Printer, CheckCircle, Save, CreditCard } from 'lucide-react'
+import { ShoppingCart, Plus, Minus, Trash2, FileText, Printer, CheckCircle, Save, CreditCard, Wallet } from 'lucide-react'
 
 export default function OrderSummary({
   selectedMesa,
@@ -18,7 +18,9 @@ export default function OrderSummary({
   onComanda,
   onCuenta,
   onImprimir,
+  onTarjeta,
   pagoQR,
+  pagoTarjeta,
   pedidoActivo,
   validationError
 }) {
@@ -158,14 +160,32 @@ export default function OrderSummary({
             </button>
           </div>
           
-          {/* Botón Imprimir */}
-          <button 
-            onClick={onImprimir}
-            className="col-span-4 flex items-center justify-center gap-2 p-2 bg-[var(--color-boton-cinco)] text-white rounded-lg hover:opacity-90 font-bold shadow-md transition-all"
-          >
-            <Printer size={20}/>
-            IMPRIMIR <span className="ml-1 text-white">| Bs. {totalPedido.toFixed(2)}</span>
-          </button>
+          {/* Botón Tarjeta + Imprimir */}
+          <div className='flex gap-2'>
+            <button 
+              onClick={onTarjeta}
+              className={`flex flex-col items-center w-full justify-center p-1.5 rounded-lg border-2 transition-colors ${
+                pagoTarjeta 
+                  ? 'bg-purple-600 text-white border-purple-600' 
+                  : 'bg-white text-purple-600 border-purple-600 hover:bg-purple-600 hover:text-white'
+              }`}
+            >
+              <Wallet size={20} className="mb-0.5"/>
+              <span className="text-xs font-bold uppercase">Tarjeta {pagoTarjeta ? '✓' : ''}</span>
+            </button>
+            <button 
+              onClick={onImprimir}
+              className="flex flex-col items-center w-full justify-center p-1.5 bg-[var(--color-boton-cinco)] text-white rounded-lg hover:opacity-90 font-bold shadow-md transition-all"
+            >
+              <Printer size={20} className="mb-0.5"/>
+              <span className="text-xs font-bold uppercase">Imprimir</span>
+            </button>
+          </div>
+
+          {/* Total */}
+          <div className="text-center py-1 text-sm font-bold text-[var(--gris-primario)]">
+            Total: Bs. {totalPedido.toFixed(2)}
+          </div>
         </div>
       </div>
     </div>

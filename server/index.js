@@ -71,7 +71,7 @@ const startServer = async () => {
     // Desactivar restricciones FK temporalmente para permitir actualizaciones de esquema
     await sequelize.query('PRAGMA foreign_keys = OFF');
     
-    // Sincronizar modelos sin "alter" para evitar crasheos de SQLite con constraints
+    // Sincronizar modelos
     await sequelize.sync();
     
     // Reactivar restricciones FK
