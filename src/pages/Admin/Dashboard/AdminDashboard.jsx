@@ -8,6 +8,7 @@ import useAuthStore from '../../../store/authStore'
 import api from '../../../services/api'
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import { getLocalDateString } from '../../../utils/dateUtils';
 pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs;
 
 function AdminDashboard() {
@@ -22,7 +23,7 @@ function AdminDashboard() {
     ventas_por_categoria: [],
     cajeros_turnos: []
   })
-  const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0])
+  const [targetDate, setTargetDate] = useState(getLocalDateString())
   const [loading, setLoading] = useState(true)
   const [isPedidosExpanded, setIsPedidosExpanded] = useState(false)
 
@@ -90,7 +91,7 @@ function AdminDashboard() {
         totalText: { fontSize: 14, bold: true, alignment: 'right', margin: [0, 10, 0, 0] }
       }
     };
-    pdfMake.createPdf(documentDefinition).download(`reporte_general_${new Date().toISOString().split('T')[0]}.pdf`);
+    pdfMake.createPdf(documentDefinition).download(`reporte_general_${getLocalDateString()}.pdf`);
   };
 
   const statsCards = [

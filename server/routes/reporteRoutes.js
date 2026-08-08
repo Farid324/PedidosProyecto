@@ -13,6 +13,7 @@ router.get('/mi-reporte', reporteController.getMiReporteDiario);
 
 // Reportes generales (solo admin)
 router.get('/diario', roleMiddleware(['admin']), reporteController.getReporteDiario);
+router.get('/imprimir-turno', roleMiddleware(['admin']), reporteController.getReporteTurnoImpresion);
 router.get('/mensual', roleMiddleware(['admin']), reporteController.getReporteMensual);
 router.get('/cajeros', roleMiddleware(['admin']), reporteController.getReporteCajeros);
 router.get('/admin-ventas', roleMiddleware(['admin']), reporteController.getReportesAdministrador);

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, MenuItem } = require('electron');
 const path = require('path');
 const isDev = require('electron-is-dev');
 const { autoUpdater } = require('electron-updater');
@@ -210,6 +210,32 @@ function createMainWindow() {
                 mainWindow.show();
             }, 400);
         }, 1500);
+    });
+
+    // Añadir menú contextual (click derecho) para copiar/pegar
+    mainWindow.webContents.on('context-menu', (event, params) => {
+        const menu = new Menu();
+        if (params.isEditable) {
+            menu.append(new MenuItem({ label: 'Deshacer', role: 'undo' }));
+            menu.append(new MenuItem({ label: 'Rehacer', role: 'redo' }));
+            menu.append(new MenuItem({ type: 'separator' }));
+            menu.append(new MenuItem({ label: 'Cortar', role: 'cut' }));
+            menu.append(new MenuItem({ label: 'Copiar', role: 'copy' }));
+            menu.append(new MenuItem({ label: 'Pegar', role: 'paste' }));
+            menu.append(new MenuItem({ type: 'separator' }));
+            menu.append(new MenuItem({ label: 'Seleccionar Todo', role: 'selectAll' }));
+            menu.popup({ window: mainWindow, x: params.x, y: params.y });
+        } else if (params.selectionText) {
+            menu.append(new MenuItem({ label: 'Copiar', role: 'copy' }));
+            menu.popup({ window: mainWindow, x: params.x, y: params.y });
+        }
+    });
+
+    // Forzar foco en la ventana cuando se cambia de página (arregla el bug de inputs bloqueados al desloguearse)
+    mainWindow.webContents.on('did-navigate-in-page', () => {
+        if (mainWindow) {
+            mainWindow.focus();
+        }
     });
 
     mainWindow.on('closed', () => (mainWindow = null));

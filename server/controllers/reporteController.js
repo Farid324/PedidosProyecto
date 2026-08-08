@@ -48,6 +48,7 @@ const getMiReporteDiario = async (req, res) => {
     let total = 0;
     let total_qr = 0;
     let total_efectivo = 0;
+    let total_tarjeta = 0;
     const pedidosSet = new Set();
     let turno_trabajado = 'N/D';
 
@@ -55,7 +56,9 @@ const getMiReporteDiario = async (req, res) => {
       const monto = Number(f.total || 0);
       total += monto;
       if (f.metodo_pago === 'QR') total_qr += monto;
-      if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      else if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      else total_tarjeta += monto;
+      
       if (f.pedido_id) pedidosSet.add(f.pedido_id);
 
       const turno = f.Pedido ? f.Pedido.turno : 'N/D';
@@ -95,6 +98,7 @@ const getMiReporteDiario = async (req, res) => {
           total: Number(total.toFixed(2)),
           total_qr: Number(total_qr.toFixed(2)),
           total_efectivo: Number(total_efectivo.toFixed(2)),
+          total_tarjeta: Number(total_tarjeta.toFixed(2)),
           total_pedidos: pedidosSet.size
         },
         ventas
@@ -294,13 +298,16 @@ const getReportesAdministrador = async (req, res) => {
     let total = 0;
     let total_qr = 0;
     let total_efectivo = 0;
+    let total_tarjeta = 0;
     const pedidosSet = new Set();
 
     const ventas = facturas.map(f => {
       const monto = Number(f.total || 0);
       total += monto;
       if (f.metodo_pago === 'QR') total_qr += monto;
-      if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      else if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      else total_tarjeta += monto;
+      
       if (f.pedido_id) pedidosSet.add(f.pedido_id);
 
       return {
@@ -325,6 +332,7 @@ const getReportesAdministrador = async (req, res) => {
           total: Number(total.toFixed(2)),
           total_qr: Number(total_qr.toFixed(2)),
           total_efectivo: Number(total_efectivo.toFixed(2)),
+          total_tarjeta: Number(total_tarjeta.toFixed(2)),
           total_pedidos: pedidosSet.size
         },
         ventas
@@ -510,6 +518,61 @@ const limpiarHistorialAntiguo = async (req, res) => {
   }
 };
 
+const getReporteTurnoImpresion = async (req, res) => {
+  try {
+    const { date, turno, cajero } = req.query;
+    
+    const targetDate = date ? new Date(date + 'T00:00:00') : new Date();
+    const start = startOfDay(targetDate);
+    const end = endOfDay(targetDate);
+
+    let whereClause = {
+      estado: 'pagada',
+      fecha_emision: { [Op.between]: [start, end] }
+    };
+    
+    if (cajero && cajero !== 'Todos') {
+      whereClause.cajero_nombre = cajero;
+    }
+
+    const facturas = await Factura.findAll({
+      where: whereClause,
+      include: [{ model: Pedido, attributes: ['turno'] }]
+    });
+
+    let facturasFiltradas = facturas;
+    if (turno && turno !== 'TODOS') {
+      facturasFiltradas = facturas.filter(f => f.Pedido && f.Pedido.turno === turno);
+    }
+
+    let total = 0, total_qr = 0, total_efectivo = 0, total_tarjeta = 0;
+    
+    facturasFiltradas.forEach(f => {
+      const monto = Number(f.total || 0);
+      total += monto;
+      if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      else if (f.metodo_pago === 'QR') total_qr += monto;
+      else total_tarjeta += monto; // Tarjeta u OTRO
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        fecha: start.toISOString().split('T')[0],
+        turno: turno || 'TODOS',
+        cajero: cajero && cajero !== 'Todos' ? cajero : null,
+        resumen: {
+          total, total_qr, total_efectivo, total_tarjeta
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en getReporteTurnoImpresion:', error);
+    return res.status(500).json({ success: false, message: 'Error al generar reporte de turno' });
+  }
+};
+
 module.exports = {
   getMiReporteDiario,
   getReporteDiario,
@@ -517,5 +580,6 @@ module.exports = {
   getReporteCajeros,
   getReportesAdministrador,
   getDashboardAdministrador,
-  limpiarHistorialAntiguo
+  limpiarHistorialAntiguo,
+  getReporteTurnoImpresion
 };
