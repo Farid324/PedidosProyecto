@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter, Eye, X, FileText, Printer, CreditCard } from 'lucide-react';
+import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter, Eye, X, FileText, Printer, CreditCard, Truck } from 'lucide-react';
 import useAuthStore from '../../../store/authStore';
 import api from '../../../services/api';
 import { getLocalDateString } from '../../../utils/dateUtils';
@@ -251,7 +251,7 @@ function ReportesPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
         <div className="card hover:shadow-lg transition">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-blue-100 p-3 rounded-lg">
@@ -290,6 +290,16 @@ function ReportesPage() {
           </div>
           <h3 className="text-2xl font-bold text-gray-800">Bs {data.resumen?.total_tarjeta?.toFixed(2) || '0.00'}</h3>
           <p className="text-gray-600 text-sm mt-1">Tarjeta/Otro</p>
+        </div>
+
+        <div className="card hover:shadow-lg transition">
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-red-100 p-3 rounded-lg">
+              <Truck className="text-red-600" size={24} />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800">Bs {data.resumen?.total_pedidosya?.toFixed(2) || '0.00'}</h3>
+          <p className="text-gray-600 text-sm mt-1">PedidosYa</p>
         </div>
 
         <div className="card hover:shadow-lg transition">
@@ -340,6 +350,7 @@ function ReportesPage() {
               <option value="QR">Por QR</option>
               <option value="EFECTIVO">Efectivo</option>
               <option value="TARJETA">Tarjeta/Otro</option>
+              <option value="PEDIDOSYA">PedidosYa</option>
             </select>
           </div>
         </div>
@@ -386,7 +397,9 @@ function ReportesPage() {
                     <td className="py-3 px-4 font-semibold text-gray-800 whitespace-nowrap">Bs {Number(v.monto_total).toFixed(2)}</td>
                     <td className="py-3 px-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        v.metodo_pago === 'QR' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'
+                        v.metodo_pago === 'QR' ? 'bg-purple-100 text-purple-700' :
+                        v.metodo_pago === 'PEDIDOSYA' ? 'bg-red-100 text-red-700' :
+                        'bg-green-100 text-green-700'
                       }`}>
                         {v.metodo_pago}
                       </span>

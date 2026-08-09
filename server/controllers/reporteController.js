@@ -49,6 +49,7 @@ const getMiReporteDiario = async (req, res) => {
     let total_qr = 0;
     let total_efectivo = 0;
     let total_tarjeta = 0;
+    let total_pedidosya = 0;
     const pedidosSet = new Set();
     let turno_trabajado = 'N/D';
 
@@ -57,6 +58,7 @@ const getMiReporteDiario = async (req, res) => {
       total += monto;
       if (f.metodo_pago === 'QR') total_qr += monto;
       else if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      else if (f.metodo_pago === 'PEDIDOSYA') total_pedidosya += monto;
       else total_tarjeta += monto;
       if (f.pedido_id) pedidosSet.add(f.pedido_id);
 
@@ -98,6 +100,7 @@ const getMiReporteDiario = async (req, res) => {
           total_qr: Number(total_qr.toFixed(2)),
           total_efectivo: Number(total_efectivo.toFixed(2)),
           total_tarjeta: Number(total_tarjeta.toFixed(2)),
+          total_pedidosya: Number(total_pedidosya.toFixed(2)),
           total_pedidos: pedidosSet.size
         },
         ventas
@@ -298,6 +301,7 @@ const getReportesAdministrador = async (req, res) => {
     let total_qr = 0;
     let total_efectivo = 0;
     let total_tarjeta = 0;
+    let total_pedidosya = 0;
     const pedidosSet = new Set();
 
     const ventas = facturas.map(f => {
@@ -305,6 +309,7 @@ const getReportesAdministrador = async (req, res) => {
       total += monto;
       if (f.metodo_pago === 'QR') total_qr += monto;
       else if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
+      else if (f.metodo_pago === 'PEDIDOSYA') total_pedidosya += monto;
       else total_tarjeta += monto;
       if (f.pedido_id) pedidosSet.add(f.pedido_id);
 
@@ -331,6 +336,7 @@ const getReportesAdministrador = async (req, res) => {
           total_qr: Number(total_qr.toFixed(2)),
           total_efectivo: Number(total_efectivo.toFixed(2)),
           total_tarjeta: Number(total_tarjeta.toFixed(2)),
+          total_pedidosya: Number(total_pedidosya.toFixed(2)),
           total_pedidos: pedidosSet.size
         },
         ventas
@@ -543,13 +549,14 @@ const getReporteTurnoImpresion = async (req, res) => {
       facturasFiltradas = facturas.filter(f => f.Pedido && f.Pedido.turno === turno);
     }
 
-    let total = 0, total_qr = 0, total_efectivo = 0, total_tarjeta = 0;
+    let total = 0, total_qr = 0, total_efectivo = 0, total_tarjeta = 0, total_pedidosya = 0;
     
     facturasFiltradas.forEach(f => {
       const monto = Number(f.total || 0);
       total += monto;
       if (f.metodo_pago === 'EFECTIVO') total_efectivo += monto;
       else if (f.metodo_pago === 'QR') total_qr += monto;
+      else if (f.metodo_pago === 'PEDIDOSYA') total_pedidosya += monto;
       else total_tarjeta += monto; // Tarjeta u OTRO
     });
 
@@ -560,7 +567,7 @@ const getReporteTurnoImpresion = async (req, res) => {
         turno: turno || 'TODOS',
         cajero: cajero && cajero !== 'Todos' ? cajero : null,
         resumen: {
-          total, total_qr, total_efectivo, total_tarjeta
+          total, total_qr, total_efectivo, total_tarjeta, total_pedidosya
         }
       }
     });

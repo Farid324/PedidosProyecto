@@ -215,7 +215,7 @@ function CajeroLayout() {
 
       for (const pedido of todos) {
         await api.put(`/pedidos/${pedido.id}/finalizar`, { 
-          metodo_pago: pedido.pago_qr ? 'QR' : 'EFECTIVO' 
+          metodo_pago: pedido.pago_pedidosya ? 'PEDIDOSYA' : (pedido.pago_tarjeta ? 'TARJETA' : (pedido.pago_qr ? 'QR' : 'EFECTIVO')) 
         });
       }
     } catch (error) {
@@ -276,7 +276,7 @@ function CajeroLayout() {
 
         for (const pedido of todos) {
           await api.put(`/pedidos/${pedido.id}/finalizar`, { 
-            metodo_pago: pedido.pago_qr ? 'QR' : 'EFECTIVO' 
+            metodo_pago: pedido.pago_pedidosya ? 'PEDIDOSYA' : (pedido.pago_tarjeta ? 'TARJETA' : (pedido.pago_qr ? 'QR' : 'EFECTIVO')) 
           });
         }
       } catch (error) {

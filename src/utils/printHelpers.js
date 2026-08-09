@@ -15,7 +15,8 @@ export const printShiftReceipt = (data) => {
       total = 0,
       total_qr = 0,
       total_efectivo = 0,
-      total_tarjeta = 0
+      total_tarjeta = 0,
+      total_pedidosya = 0
     } = {}
   } = data;
 
@@ -66,6 +67,10 @@ export const printShiftReceipt = (data) => {
       <div class="row">
         <span>TARJETA:</span>
         <span>Bs ${Number(total_tarjeta).toFixed(2)}</span>
+      </div>
+      <div class="row">
+        <span>PEDIDOSYA:</span>
+        <span>Bs ${Number(total_pedidosya).toFixed(2)}</span>
       </div>
       
       <div class="row-total">

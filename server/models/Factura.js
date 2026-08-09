@@ -12,6 +12,6 @@ module.exports = (sequelize, DataTypes) => {
     descuento: { type: DataTypes.DECIMAL(10,2), defaultValue: 0 },
     total: { type: DataTypes.DECIMAL(10,2), defaultValue: 0 },
     estado: { type: DataTypes.ENUM('pagada','pendiente','anulada'), defaultValue: 'pagada' },
-    metodo_pago: { type: DataTypes.ENUM('EFECTIVO','TARJETA','QR','OTRO'), defaultValue: 'EFECTIVO' },
+    metodo_pago: { type: DataTypes.ENUM('EFECTIVO','TARJETA','QR','PEDIDOSYA','OTRO'), defaultValue: 'EFECTIVO' },
   }, { tableName: 'facturas', timestamps: true });
 };

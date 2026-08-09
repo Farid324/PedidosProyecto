@@ -324,7 +324,7 @@ const finalizarPedido = async (req, res) => {
 const updatePedido = async (req, res) => {
   try {
     const { id } = req.params;
-    const { mesa, observaciones, metodo_pago, pago_qr, pago_tarjeta } = req.body;
+    const { mesa, observaciones, metodo_pago, pago_qr, pago_tarjeta, pago_pedidosya } = req.body;
 
     const pedido = await Pedido.findByPk(id);
 
@@ -338,6 +338,7 @@ const updatePedido = async (req, res) => {
       metodo_pago: metodo_pago !== undefined ? metodo_pago : pedido.metodo_pago,
       pago_qr: pago_qr !== undefined ? pago_qr : pedido.pago_qr,
       pago_tarjeta: pago_tarjeta !== undefined ? pago_tarjeta : pedido.pago_tarjeta,
+      pago_pedidosya: pago_pedidosya !== undefined ? pago_pedidosya : pedido.pago_pedidosya,
     });
 
     res.json({ success: true, data: pedido });

@@ -1,5 +1,5 @@
 // src/components/pedidos/OrderSummary.jsx
-import { ShoppingCart, Plus, Minus, Trash2, FileText, Printer, CheckCircle, Save, CreditCard, Wallet } from 'lucide-react'
+import { ShoppingCart, Plus, Minus, Trash2, FileText, Printer, CheckCircle, Save, CreditCard, Wallet, Truck } from 'lucide-react'
 
 export default function OrderSummary({
   selectedMesa,
@@ -19,8 +19,10 @@ export default function OrderSummary({
   onCuenta,
   onImprimir,
   onTarjeta,
+  onPedidosYa,
   pagoQR,
   pagoTarjeta,
+  pagoPedidosYa,
   pedidoActivo,
   validationError
 }) {
@@ -113,7 +115,7 @@ export default function OrderSummary({
       </div>
 
       {/* 3. Footer */}
-      <div className="bg-white border-gray-200 space-y-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] shrink-0 z-10">
+      <div className="bg-white border-gray-200 space-y-1.5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] shrink-0 z-10">
         <textarea 
           placeholder="Observaciones (Nº viper, notas de cocina)..." 
           className="w-full pt-2 pr-2 pl-2 pb-6 text-xs bg-gray-50 border text-[var(--gris-primario)] border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--guindo-primario)] resize-none"
@@ -122,70 +124,82 @@ export default function OrderSummary({
           onChange={(e) => setObservaciones(e.target.value)}
         />
 
-        <div className="flex flex-col gap-2">
-          <div className='flex gap-2'>
+        <div className="flex flex-col gap-1.5">
+          {/* Fila 1: Registrar | Finalizar */}
+          <div className='flex gap-1.5'>
             <button 
               onClick={onRegistrar}
-              className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-uno)] rounded-lg hover:bg-[var(--color-boton-uno)] border-2 border-[var(--color-boton-uno)] hover:text-white transition-colors"
+              className="flex items-center w-full justify-center gap-1.5 py-2 px-2 bg-white text-[var(--color-boton-uno)] rounded-lg hover:bg-[var(--color-boton-uno)] border-2 border-[var(--color-boton-uno)] hover:text-white transition-colors"
             >
-              <Save size={20} className="mb-0.5"/>
+              <Save size={16}/>
               <span className="text-xs font-bold uppercase">Registrar</span>
             </button>
             <button 
               onClick={onFinalizar}
-              className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-dos)] rounded-lg hover:bg-[var(--color-boton-dos)] border-2 border-[var(--color-boton-dos)] hover:text-white transition-colors"
+              className="flex items-center w-full justify-center gap-1.5 py-2 px-2 bg-white text-[var(--color-boton-dos)] rounded-lg hover:bg-[var(--color-boton-dos)] border-2 border-[var(--color-boton-dos)] hover:text-white transition-colors"
             >
-              <CheckCircle size={20} className="mb-0.5"/>
+              <CheckCircle size={16}/>
               <span className="text-xs font-bold uppercase">Finalizar</span>
             </button>
           </div>
-          <div className='flex gap-2'>
+
+          {/* Fila 2: Comanda | Cuenta */}
+          <div className='flex gap-1.5'>
             <button 
               onClick={onComanda}
-              className="flex flex-col items-center w-full justify-center p-1.5 bg-white text-[var(--color-boton-tres)] rounded-lg hover:bg-[var(--color-boton-tres)] border-2 border-[var(--color-boton-tres)] hover:text-white transition-colors"
+              className="flex items-center w-full justify-center gap-1.5 py-2 px-2 bg-white text-[var(--color-boton-tres)] rounded-lg hover:bg-[var(--color-boton-tres)] border-2 border-[var(--color-boton-tres)] hover:text-white transition-colors"
             >
-              <FileText size={20} className="mb-0.5"/>
+              <FileText size={16}/>
               <span className="text-xs font-bold uppercase">Comanda</span>
             </button>
             <button 
               onClick={onCuenta}
-              className={`flex flex-col items-center w-full justify-center p-1.5 rounded-lg border-2 transition-colors ${
+              className={`flex items-center w-full justify-center gap-1.5 py-2 px-2 rounded-lg border-2 transition-colors ${
                 pagoQR 
                   ? 'bg-[var(--color-boton-cuatro)] text-white border-[var(--color-boton-cuatro)]' 
                   : 'bg-white text-[var(--color-boton-cuatro)] border-[var(--color-boton-cuatro)] hover:bg-[var(--color-boton-cuatro)] hover:text-white'
               }`}
             >
-              <CreditCard size={20} className="mb-0.5"/>
+              <CreditCard size={16}/>
               <span className="text-xs font-bold uppercase">Cuenta {pagoQR ? '(QR)' : ''}</span>
             </button>
           </div>
-          
-          {/* Botón Tarjeta + Imprimir */}
-          <div className='flex gap-2'>
+
+          {/* Fila 3: Tarjeta | PedidosYa */}
+          <div className='flex gap-1.5'>
             <button 
               onClick={onTarjeta}
-              className={`flex flex-col items-center w-full justify-center p-1.5 rounded-lg border-2 transition-colors ${
+              className={`flex items-center w-full justify-center gap-1.5 py-2 px-2 rounded-lg border-2 transition-colors ${
                 pagoTarjeta 
                   ? 'bg-purple-600 text-white border-purple-600' 
                   : 'bg-white text-purple-600 border-purple-600 hover:bg-purple-600 hover:text-white'
               }`}
             >
-              <Wallet size={20} className="mb-0.5"/>
+              <Wallet size={16}/>
               <span className="text-xs font-bold uppercase">Tarjeta {pagoTarjeta ? '✓' : ''}</span>
             </button>
             <button 
-              onClick={onImprimir}
-              className="flex flex-col items-center w-full justify-center p-1.5 bg-[var(--color-boton-cinco)] text-white rounded-lg hover:opacity-90 font-bold shadow-md transition-all"
+              onClick={onPedidosYa}
+              className={`flex items-center w-full justify-center gap-1.5 py-2 px-2 rounded-lg border-2 transition-colors ${
+                pagoPedidosYa 
+                  ? 'bg-red-600 text-white border-red-600' 
+                  : 'bg-white text-red-600 border-red-600 hover:bg-red-600 hover:text-white'
+              }`}
             >
-              <Printer size={20} className="mb-0.5"/>
-              <span className="text-xs font-bold uppercase">Imprimir</span>
+              <Truck size={16}/>
+              <span className="text-xs font-bold uppercase">PedidosYa {pagoPedidosYa ? '✓' : ''}</span>
             </button>
           </div>
 
-          {/* Total */}
-          <div className="text-center py-1 text-sm font-bold text-[var(--gris-primario)]">
-            Total: Bs. {totalPedido.toFixed(2)}
-          </div>
+          {/* Fila 4: Imprimir (solo, con total) */}
+          <button 
+            onClick={onImprimir}
+            className="flex items-center w-full justify-center gap-2 py-2.5 px-2 bg-[var(--color-boton-cinco)] text-white rounded-lg hover:opacity-90 font-bold shadow-md transition-all"
+          >
+            <Printer size={16}/>
+            <span className="text-xs font-bold uppercase">Imprimir</span>
+            <span className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded ml-1">Bs. {totalPedido.toFixed(2)}</span>
+          </button>
         </div>
       </div>
     </div>
