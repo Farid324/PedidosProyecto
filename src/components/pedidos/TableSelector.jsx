@@ -85,9 +85,9 @@ export default function TableSelector({ selectedMesa, onSelectMesa, mesasOcupada
 
   return (
     <div className='card bg-white p-4 rounded-xl shrink-0 shadow-sm border border-gray-100'>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 gap-2">
         <h2 className="text-lg font-bold text-[var(--gris-primario)]">Seleccionar Mesa</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-gray-200 border border-gray-300"></span>
             <span className="text-xs text-gray-500">Libre</span>

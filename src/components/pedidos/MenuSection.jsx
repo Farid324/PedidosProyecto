@@ -22,7 +22,7 @@ export default function MenuSection({
   })
 
   return (
-    <div className="card bg-white p-4 rounded-xl flex-1 flex flex-col h-full shadow-sm border border-gray-100 min-h-0">
+    <div className="card bg-white p-4 rounded-xl flex-1 flex flex-col h-[500px] lg:h-full shadow-sm border border-gray-100 lg:min-h-0">
       <div className='flex gap-3 items-center mb-4 shrink-0'>
     <h2 className='text-xl font-bold text-gray-800'>Menú</h2>
         <div className="flex-1">

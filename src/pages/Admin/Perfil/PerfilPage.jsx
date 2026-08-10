@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Check, User, Camera, X } from 'lucide-react'
+import ConfirmModal from '../../../components/common/ConfirmModal'
 
 import useAuthStore from '../../../store/authStore'
 import usuarioService from '../../../services/usuarioService'
@@ -21,8 +22,9 @@ function PerfilPage() {
     telefono: user?.telefono || ''
   })
   
-  // Toast
+  // Toast & Modal
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' })
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', type: 'warning', onConfirm: null })
 
   const playSuccessSound = () => {
     try {
@@ -108,9 +110,34 @@ function PerfilPage() {
   }
 
   const handleRemoveFoto = () => {
-    if (!confirm('¿Eliminar tu foto de perfil actual?')) return
-    setPreviewFoto(null)
-    setSavedPerfil(false)
+    setConfirmModal({
+      isOpen: true,
+      title: 'Quitar foto de perfil',
+      message: '¿Estás seguro de que deseas eliminar tu foto de perfil actual?',
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }))
+        try {
+          const updatedData = {
+            carnet: formData.carnet,
+            edad: formData.edad ? parseInt(formData.edad) : null,
+            telefono: formData.telefono,
+            foto: null
+          }
+          const res = await usuarioService.updateUsuario(user.id, updatedData)
+          if (res.success) {
+            updateUser(res.data)
+            setPreviewFoto(null)
+            setSavedPerfil(true)
+            showToast('Foto de perfil eliminada', 'success')
+            setTimeout(() => setSavedPerfil(false), 3000)
+          }
+        } catch (error) {
+          console.error('Error actualizando perfil:', error)
+          showToast(error.response?.data?.message || 'Error al eliminar la foto', 'error')
+        }
+      }
+    })
   }
 
   const handleSavePerfil = async () => {
@@ -300,6 +327,17 @@ function PerfilPage() {
           <p className="font-semibold text-sm">{toast.message}</p>
         </div>
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText="Eliminar Foto"
+      />
     </div>
   )
 }

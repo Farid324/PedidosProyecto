@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { DollarSign, ShoppingCart, QrCode, Banknote, Download, Search, Filter, Eye, Trash2, X, FileText, CreditCard, Truck } from 'lucide-react';
+import ConfirmModal from '../../../components/common/ConfirmModal';
 import useAuthStore from '../../../store/authStore';
 import api from '../../../services/api';
 import { getLocalDateString } from '../../../utils/dateUtils';
@@ -12,6 +13,7 @@ function ReportesPage() {
   const { role, user } = useAuthStore();
   const [data, setData] = useState({ resumen: {}, ventas: [] });
   const [loading, setLoading] = useState(true);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', type: 'warning', confirmText: 'Confirmar', isAlert: false, onConfirm: null });
 
   // Filtros de fecha
   const [period, setPeriod] = useState('mes');
@@ -206,21 +208,54 @@ function ReportesPage() {
     }
   };
 
-  const handleLimpiarHistorial = async () => {
-    if (window.confirm("⚠️ ADVERTENCIA: Esta acción eliminará permanentemente TODOS los reportes, facturas y pedidos del sistema. ¿Estás absolutamente seguro de querer continuar?")) {
-      if (window.confirm("Esta acción NO se puede deshacer y tu historial de ventas quedará en cero. ¿Proceder con la limpieza total?")) {
-        try {
-          const res = await api.delete('/reportes/limpiar-historial');
-          if (res.data.success) {
-            alert(res.data.message || 'Historial limpiado correctamente.');
-            fetchReporte();
+  const handleLimpiarHistorial = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Limpiar Historial de Ventas',
+      message: '⚠️ ADVERTENCIA: Esta acción eliminará permanentemente TODOS los reportes, facturas y pedidos del sistema. ¿Estás absolutamente seguro de querer continuar?',
+      type: 'danger',
+      confirmText: 'Sí, continuar',
+      isAlert: false,
+      onConfirm: () => {
+        setConfirmModal({
+          isOpen: true,
+          title: 'Confirmación Final',
+          message: 'Esta acción NO se puede deshacer y tu historial de ventas quedará en cero. ¿Proceder con la limpieza total?',
+          type: 'danger',
+          confirmText: 'Limpiar Todo',
+          isAlert: false,
+          onConfirm: async () => {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            try {
+              const res = await api.delete('/reportes/limpiar-historial');
+              if (res.data.success) {
+                setConfirmModal({
+                  isOpen: true,
+                  title: 'Éxito',
+                  message: res.data.message || 'Historial limpiado correctamente.',
+                  type: 'success',
+                  confirmText: 'Aceptar',
+                  isAlert: true,
+                  onConfirm: null
+                });
+                fetchReporte();
+              }
+            } catch (error) {
+              console.error("Error limpiando historial", error);
+              setConfirmModal({
+                isOpen: true,
+                title: 'Error',
+                message: 'Hubo un error al limpiar el historial.',
+                type: 'danger',
+                confirmText: 'Aceptar',
+                isAlert: true,
+                onConfirm: null
+              });
+            }
           }
-        } catch (error) {
-          console.error("Error limpiando historial", error);
-          alert('Hubo un error al limpiar el historial.');
-        }
+        });
       }
-    }
+    });
   };
 
   return (
@@ -585,6 +620,18 @@ function ReportesPage() {
         </div>,
         document.body
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText={confirmModal.confirmText}
+        isAlert={confirmModal.isAlert}
+      />
     </div>
   );
 }

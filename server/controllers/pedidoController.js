@@ -13,9 +13,8 @@ const getPedidos = async (req, res) => {
     if (cajero) where.cajero_nombre = cajero;
     
     if (fecha) {
-      const fechaInicio = new Date(fecha);
-      const fechaFin = new Date(fecha);
-      fechaFin.setDate(fechaFin.getDate() + 1);
+      const fechaInicio = new Date(fecha + 'T00:00:00');
+      const fechaFin = new Date(fecha + 'T23:59:59.999');
       
       where.fecha_pedido = {
         [Op.between]: [fechaInicio, fechaFin]

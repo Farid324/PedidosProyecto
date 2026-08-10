@@ -622,7 +622,7 @@ function PedidosPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] gap-4 overflow-hidden p-1">
+    <div className="flex flex-col lg:h-[calc(100vh-6rem)] gap-4 overflow-y-auto lg:overflow-hidden p-1 pb-10 lg:pb-1">
 
       {/* Encabezado */}
       <div className="flex justify-between items-center shrink-0">
@@ -641,10 +641,10 @@ function PedidosPage() {
       </div>
 
       {/* Contenedor Principal */}
-      <div className='flex flex-col lg:flex-row gap-4 flex-1 min-h-0'>
+      <div className='flex flex-col lg:flex-row gap-4 flex-1 lg:min-h-0'>
 
         {/* Columna Izquierda: Mesas y Menú */}
-        <div className="flex flex-col gap-4 flex-1 min-w-0 min-h-0">
+        <div className="flex flex-col gap-4 flex-1 min-w-0 lg:min-h-0">
           <TableSelector
             selectedMesa={selectedMesa}
             onSelectMesa={handleSelectMesa}

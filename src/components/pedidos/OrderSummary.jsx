@@ -27,7 +27,7 @@ export default function OrderSummary({
   validationError
 }) {
   return (
-    <div className='card bg-white rounded-xl w-auto lg:w-96 shrink-0 h-full flex flex-col shadow-lg border border-gray-100 overflow-hidden'>
+    <div className='card bg-white rounded-xl w-full lg:w-96 shrink-0 h-[550px] lg:h-full flex flex-col shadow-lg border border-gray-100 overflow-hidden'>
       
       {/* 1. Header */}
       <div className="bg-white border-b border-gray-200 shrink-0">

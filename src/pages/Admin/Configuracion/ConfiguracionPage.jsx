@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Upload, QrCode, Check, Trash2, Image as ImageIcon, User, Camera, Eye, EyeOff, Lock, X, Clock } from 'lucide-react'
 import configuracionService from '../../../services/configuracionService'
+import ConfirmModal from '../../../components/common/ConfirmModal'
 
 import useAuthStore from '../../../store/authStore'
 import usuarioService from '../../../services/usuarioService'
@@ -29,8 +30,9 @@ function ConfiguracionPage() {
   const [loadingNotificaciones, setLoadingNotificaciones] = useState(false)
   const [savedNotificaciones, setSavedNotificaciones] = useState(false)
 
-  // Toast
+  // Toast & Modal
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' })
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', type: 'warning', onConfirm: null })
 
   const playSuccessSound = () => {
     try {
@@ -243,17 +245,25 @@ function ConfiguracionPage() {
     }
   }
 
-  const handleRemoveQr = async () => {
-    if (!confirm('¿Eliminar la imagen QR de pago?')) return
-    try {
-      await configuracionService.saveQR('')
-      setQrImage(null)
-      setPreviewImage(null)
-      showToast('Código QR eliminado', 'success')
-    } catch (error) {
-      console.error('Error eliminando QR:', error)
-      showToast('Error al eliminar el código QR', 'error')
-    }
+  const handleRemoveQr = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Eliminar código QR',
+      message: '¿Estás seguro de que deseas eliminar la imagen QR de pago?',
+      type: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }))
+        try {
+          await configuracionService.saveQR('')
+          setQrImage(null)
+          setPreviewImage(null)
+          showToast('Código QR eliminado', 'success')
+        } catch (error) {
+          console.error('Error eliminando QR:', error)
+          showToast('Error al eliminar el código QR', 'error')
+        }
+      }
+    })
   }
 
   // ==== CONTRASEÑA ====
@@ -657,6 +667,17 @@ function ConfiguracionPage() {
           <p className="font-semibold text-sm">{toast.message}</p>
         </div>
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText="Eliminar"
+      />
     </div>
   )
 }
