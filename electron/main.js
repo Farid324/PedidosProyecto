@@ -191,7 +191,11 @@ function createMainWindow() {
         }
     });
 
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    if (isDev && process.env.VITE_DEV_SERVER_URL) {
+        mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    } else {
+        mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    }
 
     mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
         console.log(`[Renderer] ${message}`);
