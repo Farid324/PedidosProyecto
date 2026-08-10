@@ -219,7 +219,7 @@ function LoginPage() {
   useEffect(() => {
     const fetchShiftConfig = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:43921/api'
         const keys = ['turno_manana_ingreso', 'turno_manana_salida', 'turno_tarde_ingreso', 'turno_tarde_salida']
         const results = {}
         for (const k of keys) {
@@ -556,7 +556,7 @@ function LoginPage() {
           )}
         </Modal>
 
-        <p className="text-gray-500 text-xs mt-6">© 2025 Restaurant POS - v1.0.0</p>
+        <p className="text-gray-500 text-xs mt-6">© 2026 Restaurant POS - v1.0.1</p>
       </div>
       
       {/* Toast Notification */}

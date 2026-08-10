@@ -1,7 +1,7 @@
 // src/services/usuarioService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api/usuarios';
+const API_URL = 'http://localhost:43921/api/usuarios';
 
 const getUsuarios = async () => {
   const response = await axios.get(API_URL);
